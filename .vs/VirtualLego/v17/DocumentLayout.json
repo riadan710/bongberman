@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\ws637\\source\\repos\\oop16_proj3\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C096A731-DE09-4367-869F-DFBAE35AFE1B}|VirtualLego.vcxproj|C:\\Users\\ws637\\source\\repos\\oop16_proj3\\virtualLego.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C096A731-DE09-4367-869F-DFBAE35AFE1B}|VirtualLego.vcxproj|solutionrelative:virtualLego.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C096A731-DE09-4367-869F-DFBAE35AFE1B}|VirtualLego.vcxproj|C:\\Users\\ws637\\source\\repos\\oop16_proj3\\d3dUtility.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C096A731-DE09-4367-869F-DFBAE35AFE1B}|VirtualLego.vcxproj|solutionrelative:d3dUtility.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "d3dUtility.cpp",
+              "DocumentMoniker": "C:\\Users\\ws637\\source\\repos\\oop16_proj3\\d3dUtility.cpp",
+              "RelativeDocumentMoniker": "d3dUtility.cpp",
+              "ToolTip": "C:\\Users\\ws637\\source\\repos\\oop16_proj3\\d3dUtility.cpp",
+              "RelativeToolTip": "d3dUtility.cpp",
+              "ViewState": "AQIAABQAAAAAAAAAAAAAACIAAAAwAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-11-18T14:36:06.911Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "virtualLego.cpp",
+              "DocumentMoniker": "C:\\Users\\ws637\\source\\repos\\oop16_proj3\\virtualLego.cpp",
+              "RelativeDocumentMoniker": "virtualLego.cpp",
+              "ToolTip": "C:\\Users\\ws637\\source\\repos\\oop16_proj3\\virtualLego.cpp",
+              "RelativeToolTip": "virtualLego.cpp",
+              "ViewState": "AQIAALECAAAAAAAAAAAqwMMCAAAwAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-11-18T12:34:43.477Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
