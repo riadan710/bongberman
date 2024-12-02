@@ -16,7 +16,10 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
+#include <windows.h>
+#include <string>
 
+using namespace std;
 // Direct3D 장치 포인터
 IDirect3DDevice9* Device = NULL;
 
@@ -37,7 +40,7 @@ D3DXMATRIX g_mView;
 D3DXMATRIX g_mProj;
 
 // 공 반지름 및 기타 상수 정의
-#define M_RADIUS 0.21   // 공 반지름
+#define M_RADIUS 0.29   // 공 반지름
 #define PI 3.14159265
 #define M_HEIGHT 0.01
 #define DECREASE_RATE 1 // 속도 감소율 0.9982
@@ -61,7 +64,8 @@ private:
     float m_velocity_x;                 // x축 속도
     float m_velocity_z;                 // z축 속도
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
-
+    int playerIndexX;
+    int playerIndexY;
 public:
     // 생성자: 공의 초기 상태를 설정
     CSphere(void) {
@@ -72,6 +76,8 @@ public:
         m_velocity_z = 0;
         m_pSphereMesh = NULL;          // 메쉬 초기화
     }
+
+    
 
     ~CSphere(void) {}
 
@@ -185,7 +191,18 @@ public:
             float tZ = cord.z + TIME_SCALE * timeDiff * m_velocity_z;
 
             
-
+            if (tX <= -4.5f + M_RADIUS) {
+                tX = -4.5 + M_RADIUS;
+            }
+            else if (tX >= 4.5 - M_RADIUS) {
+                tX = 4.5 - M_RADIUS;
+            }
+            if (tZ <= -4.5f + M_RADIUS) {
+                tZ = -4.5 + M_RADIUS;
+            }
+            else if (tZ >= 4.5 - M_RADIUS) {
+                tZ = 4.5 - M_RADIUS;
+            }
             this->setCenter(tX, cord.y, tZ); // 새로운 위치 설정
         }
         else {
@@ -214,6 +231,14 @@ public:
     void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
     D3DXVECTOR3 getCenter(void) const {
         return D3DXVECTOR3(center_x, center_y, center_z);
+    }
+    void updatePlayerIndex() {
+        //0,0칸은 -4.5, 4.5임 여기서 플레이어 반지름을 빼서 벽에서 못나가게 하는걸 구하자
+        this->playerIndexX = (int)((this->center_x + 4.5f) / 0.6f);
+        this->playerIndexY = (int)((4.5f - this->center_y) / 0.6f);
+        
+        string message = "x: " + to_string(this->playerIndexX) + " y: " + to_string(this->playerIndexY);
+        OutputDebugString((message + "\n").c_str());
     }
 
 private:
@@ -342,7 +367,7 @@ public:
 
     float getHeight(void) const { return M_HEIGHT; }
 
-
+    
 
 private:
     void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
@@ -454,30 +479,15 @@ CWall boundaryLineByY[14];//15x15사이즈 세로눈금선
 
 
 double g_camera_pos[3] = { 0.0, 5.0, -8.0 };
-CSphere player[2];//
+CSphere player[2];//플레이어 1p,2p
 CSphere   g_target_blueball;
-CSphere score_sphere[14][12];
+
 int ss_y = 14;
 int ss_x = 12;
 int validCount = 0;
 
 
-int smiley[14][12] = {//수동으로 출력해주려고 배열 만들었음
-    {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
-    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1},
-    {1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-    {1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1},
-    {1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-    {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0}
-};
+
 
 
 
@@ -495,7 +505,7 @@ void destroyAllLegoBlock(void)
 bool Setup()
 {
     int i;
-
+    OutputDebugStringA("This is a test message.\n");
     D3DXMatrixIdentity(&g_mWorld);
     D3DXMatrixIdentity(&g_mView);
     D3DXMatrixIdentity(&g_mProj);
@@ -536,23 +546,16 @@ bool Setup()
 
     
 
-    // 점수 판정 공만들기
-    for (i = 0; i < ss_y; i++) {
-        for (int j = 0; j < ss_x ; j++) {
-            if (smiley[i][j] == 1) {
-                if (false == score_sphere[i][j].create(Device, sphereColor[2])) return false;
-                score_sphere[i][j].setCenter(-2.31f + j*M_RADIUS*2, (float)M_RADIUS, 3.8f - i*M_RADIUS*2 );
-                score_sphere[i][j].setPower(0, 0);
-                validCount++;
+    
 
-            }
-        }
-    }
-
-    //발사용 흰공 생성
+    //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
     player[0].setCenter(.0f, (float)M_RADIUS, -3.5f);
     player[0].setPower(0, 0);
+    //플레이어 2 생성 
+    if (false == player[1].create(Device, d3d::BLUE)) return false;
+    player[1].setCenter(4.5f, (float)M_RADIUS, -3.5f);
+    player[1].setPower(0, 0);
     // create blue ball for set direction
     if (false == g_target_blueball.create(Device, d3d::WHITE)) return false;
     g_target_blueball.setCenter(.0f, (float)M_RADIUS, -4.0f);
@@ -653,7 +656,8 @@ bool Display(float timeDelta)
         player[0].ballUpdate(timeDelta);
         player[0].draw(Device, g_mWorld);
 
-        
+        player[1].ballUpdate(timeDelta);
+        player[1].draw(Device, g_mWorld);
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
@@ -688,7 +692,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_KEYDOWN:
     {
-        
+        player[0].updatePlayerIndex();
         keyStates[wParam] = true;
         switch (wParam) {
         case VK_ESCAPE:
@@ -716,20 +720,17 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
 
         case VK_UP:
-            // 위쪽 화살표 키가 눌렸을 때 처리
-            // 예: ypower 증가 (위쪽 이동)
+            player[1].setPower(0, playerTwoSp);
             break;
         case VK_DOWN:
-            // 아래쪽 화살표 키가 눌렸을 때 처리
-            // 예: ypower 감소 (아래쪽 이동)
+            player[1].setPower(0, -playerTwoSp);
+           
             break;
         case VK_LEFT:
-            // 왼쪽 화살표 키가 눌렸을 때 처리
-            // 예: xpower 감소 (왼쪽 이동)
+            player[1].setPower(-playerTwoSp, 0);
             break;
         case VK_RIGHT:
-            // 오른쪽 화살표 키가 눌렸을 때 처리
-            // 예: xpower 증가 (오른쪽 이동)
+            player[1].setPower(playerTwoSp, 0);
             break;
         default:
             break;
@@ -737,7 +738,6 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         
         break;
     }
-
     case WM_KEYUP:
         
         switch (wParam) {
@@ -763,20 +763,34 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 player[0].setPower(0, 0);
             }
             break;
-            
+        case VK_UP:
+            if (player[1].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
+                player[1].setPower(0, 0);
+            }
             break;
+        case VK_DOWN:
+            if (player[1].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
+                player[1].setPower(0, 0);
+            }
+            break;
+        case VK_LEFT:
+            if (player[1].getVelocity_Z() == 0) {//a나 d키 누르고 있으면 안변하게
+                player[1].setPower(0, 0);
+            }
+            break;
+
+        case VK_RIGHT:
+            if (player[1].getVelocity_Z() == 0) {//a나 d키 누르고 있으면 안변하게
+                player[1].setPower(0, 0);
+            }
+            break;
+        default:
+            break;
+        
         }
-        break;
-
-    
-        
-    
+        break; 
     default:
-        
-        
-
-
-        
+     
         break;
 
     }
