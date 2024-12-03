@@ -377,6 +377,52 @@ private:
     ID3DXMesh* m_pBoundMesh;
 };
 
+class CBoom : public CSphere {
+private:
+    float b_time;
+    bool b_isActive = false;
+    float b_setTime = 3;
+    int b_numOfBoom = 1;
+    const int b_max = 10;
+
+public:
+    void pressKey(float sx, float py, float sz) {
+        if (!b_isActive) {
+            this -> b_isActive = true;
+            setCenter(sx, py, sz);
+            this -> b_time = 0;
+        }
+    }
+    //F키 눌렀을 때
+
+    void boomUpdate(float timeDelta) {
+        if (!b_isActive) {
+            return;
+        }
+
+        b_time += timeDelta;
+        if (b_time >= b_setTime) {
+            b_isActive = false;
+        }
+    }
+
+    bool getActive() {
+        return b_isActive;
+    }
+    //active 값 반환
+
+    void setNumOfBoom(int numOfBoom) {
+        if (numOfBoom <= b_max) {
+            b_numOfBoom = numOfBoom;
+        }
+    }
+    //아이템 먹고 폭탄 개수 늘려주기
+
+    int getNumOfBoom() {
+        return b_numOfBoom;
+    }
+};
+
 // -----------------------------------------------------------------------------
 // CLight class definition
 // -----------------------------------------------------------------------------
@@ -487,7 +533,7 @@ int ss_x = 12;
 int validCount = 0;
 
 
-
+CBoom testBoom;
 
 
 
@@ -552,6 +598,10 @@ bool Setup()
     if (false == player[0].create(Device, d3d::RED)) return false;
     player[0].setCenter(.0f, (float)M_RADIUS, -3.5f);
     player[0].setPower(0, 0);
+
+    //test용 boom
+    if (false == testBoom.create(Device, d3d::BLACK)) return false;
+
     //플레이어 2 생성 
     if (false == player[1].create(Device, d3d::BLUE)) return false;
     player[1].setCenter(4.5f, (float)M_RADIUS, -3.5f);
@@ -659,6 +709,12 @@ bool Display(float timeDelta)
         player[1].ballUpdate(timeDelta);
         player[1].draw(Device, g_mWorld);
 
+        if (testBoom.getActive()) {
+            testBoom.draw(Device, g_mWorld);
+        }
+        testBoom.boomUpdate(timeDelta);
+        //boom의 active 값이 true인 경우에만 보이도록 설정
+
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
         Device->SetTexture(0, NULL);
@@ -719,6 +775,10 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].setPower(playerOneSp, 0);
             break;
 
+        case 'F':
+            testBoom.pressKey(player[0].getCenter().x, player[0].getCenter().y, player[0].getCenter().z);
+            break;
+
         case VK_UP:
             player[1].setPower(0, playerTwoSp);
             break;
@@ -763,6 +823,9 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 player[0].setPower(0, 0);
             }
             break;
+
+        case 'F':
+
         case VK_UP:
             if (player[1].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
                 player[1].setPower(0, 0);
