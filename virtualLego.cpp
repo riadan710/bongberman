@@ -235,10 +235,18 @@ public:
     void updatePlayerIndex() {
         //0,0칸은 -4.5, 4.5임 여기서 플레이어 반지름을 빼서 벽에서 못나가게 하는걸 구하자
         this->playerIndexX = (int)((this->center_x + 4.5f) / 0.6f);
-        this->playerIndexY = (int)((4.5f - this->center_y) / 0.6f);
+        this->playerIndexY = (int)((4.5f - this->center_z) / 0.6f);
         
         string message = "x: " + to_string(this->playerIndexX) + " y: " + to_string(this->playerIndexY);
         OutputDebugString((message + "\n").c_str());
+    }
+
+    int getPlayerIndexX() {
+        return playerIndexX;
+    }
+
+    int getPlayerIndexY() {
+        return playerIndexY;
     }
 
 private:
@@ -776,7 +784,8 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
 
         case 'F':
-            testBoom.pressKey(player[0].getCenter().x, player[0].getCenter().y, player[0].getCenter().z);
+            player[0].updatePlayerIndex();
+            testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), player[0].getCenter().y - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
             break;
 
         case VK_UP:
