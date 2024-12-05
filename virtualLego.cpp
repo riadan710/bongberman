@@ -43,29 +43,41 @@ D3DXMATRIX g_mProj;
 #define M_RADIUS 0.29   // 공 반지름
 #define PI 3.14159265
 #define M_HEIGHT 0.01
-#define DECREASE_RATE 1 // 속도 감소율 0.9982
+#define DECREASE_RATE 1 
 #define PLANE_X 6   //게임판의 x
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
 
-//공이 움직이고 있을때는 true, 공을 발사하기 전은 false
-boolean gameRound = false;
-//이미 파란 공에 부딪혔을때 두번 연속으로 충돌이 되면서 꼬이지 않게 하기 위한 변수
-//다른 오브젝트랑 부딪히면 alreadyHit가 다시 false가 된다.
-boolean alreadyHit = false;
+//맵 배치에 사용
+int map[15][15] = {
+        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+
 
 // -----------------------------------------------------------------------------
 // 공(CSphere) 클래스 정의
 // -----------------------------------------------------------------------------
 class CSphere {
-private:
+protected:
     float center_x, center_y, center_z; // 공의 중심 좌표
     float m_radius;                     // 공 반지름
     float m_velocity_x;                 // x축 속도
     float m_velocity_z;                 // z축 속도
-    float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
-    int playerIndexX;
-    int playerIndexY;
+    
 public:
     // 생성자: 공의 초기 상태를 설정
     CSphere(void) {
@@ -76,8 +88,6 @@ public:
         m_velocity_z = 0;
         m_pSphereMesh = NULL;          // 메쉬 초기화
     }
-
-    
 
     ~CSphere(void) {}
 
@@ -115,72 +125,8 @@ public:
         pDevice->SetMaterial(&m_mtrl); // 재질 설정
         m_pSphereMesh->DrawSubset(0); // 메쉬 그리기
     }
-
-    //공 나갔는지 확인
-    bool isBallOut(CSphere& ball) {
-        D3DXVECTOR3 center = this->getCenter();
-        if (center.z < -PLANE_Y / 2.0f - 0.5f) {
-            this->setPower(0, 0);
-            alreadyHit = false;
-            gameRound = false;
-            
-            return true;
-        }
-        return false;
-    }
-
-    // 두 공이 충돌했는지 확인
-    bool hasIntersected(CSphere& ball) {
-        D3DXVECTOR3 center1 = this->getCenter(); 
-        D3DXVECTOR3 center2 = ball.getCenter(); 
-
-        float dx = center1.x - center2.x;
-        float dz = center1.z - center2.z;
-        
-        float distance = sqrt(dx * dx + dz * dz);
-
-        float radiusSum = this->getRadius() + ball.getRadius();
-
-        
-        
-        return distance <= radiusSum;
-        
-    }
-
-    // 충돌 처리
-    boolean hitBy(CSphere& ball) {
-        if (!this->hasIntersected(ball)) return false;
-        // 충돌 방향 벡터 계산
-        D3DXVECTOR3 center1 = this->getCenter();
-        D3DXVECTOR3 center2 = ball.getCenter();
-
-        D3DXVECTOR3 collisionNormal;
-        collisionNormal.x = center1.x - center2.x;
-        collisionNormal.z = center1.z - center2.z;
-
-        // 충돌 방향 벡터 정규화
-        float length = sqrt(collisionNormal.x * collisionNormal.x + collisionNormal.z * collisionNormal.z);
-        collisionNormal.x /= length;
-        collisionNormal.z /= length;
-
-        // 기존 속도
-        D3DXVECTOR3 velocity(ball.getVelocity_X(), 0, ball.getVelocity_Z());
-
-        // 속도 벡터와 충돌 방향의 내적계산에 대한 공식
-        float dotProduct = velocity.x * collisionNormal.x + velocity.z * collisionNormal.z;
-
-        // 기존 속도에서 충돌방향의 성분을 두배 뺴줌
-        D3DXVECTOR3 reflectedVelocity;
-        reflectedVelocity.x = velocity.x - 2 * dotProduct * collisionNormal.x;
-        reflectedVelocity.z = velocity.z - 2 * dotProduct * collisionNormal.z;
-
-        // 새로운 속도 설정
-        ball.setPower(reflectedVelocity.x, reflectedVelocity.z);
-        return true;
-    }
-
     // 공 위치와 속도 업데이트
-    void ballUpdate(float timeDiff) {
+    virtual void ballUpdate(float timeDiff) {
         const float TIME_SCALE = 3.3; // 시간 스케일 조정
         D3DXVECTOR3 cord = this->getCenter(); // 현재 공의 중심 좌표
         double vx = abs(this->getVelocity_X());
@@ -224,30 +170,14 @@ public:
         D3DXMatrixTranslation(&m, x, y, z);
         setLocalTransform(m);
     }
-    void setPlayerSpeed(float newSpeed) { this->playerSpeed = newSpeed; }
-    double getPlayerSpeed() { return this->playerSpeed; }
+    
     float getRadius(void) const { return (float)(M_RADIUS); }
     const D3DXMATRIX& getLocalTransform(void) const { return m_mLocal; }
     void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
     D3DXVECTOR3 getCenter(void) const {
         return D3DXVECTOR3(center_x, center_y, center_z);
     }
-    void updatePlayerIndex() {
-        //0,0칸은 -4.5, 4.5임 여기서 플레이어 반지름을 빼서 벽에서 못나가게 하는걸 구하자
-        this->playerIndexX = (int)((this->center_x + 4.5f) / 0.6f);
-        this->playerIndexY = (int)((4.5f - this->center_z) / 0.6f);
-        
-        string message = "x: " + to_string(this->playerIndexX) + " y: " + to_string(this->playerIndexY);
-        OutputDebugString((message + "\n").c_str());
-    }
-
-    int getPlayerIndexX() {
-        return playerIndexX;
-    }
-
-    int getPlayerIndexY() {
-        return playerIndexY;
-    }
+    
 
 private:
     D3DXMATRIX m_mLocal;    // 로컬 변환 행렬
@@ -345,23 +275,7 @@ public:
         return 0;
     }
 
-    void hitBy(CSphere& ball)
-    {
-        int direction = hasIntersected(ball);
-        if ( direction == 0) {
-            
-        }
-        else if (direction == 1) {
-            ball.setPower(ball.getVelocity_X(), -ball.getVelocity_Z());
-            
-            alreadyHit = false;
-        }
-        else{
-            ball.setPower(-ball.getVelocity_X(), ball.getVelocity_Z());
-            alreadyHit = false;
-        }
-        
-    }
+    
 
     void setPosition(float x, float y, float z)
     {
@@ -428,6 +342,149 @@ public:
 
     int getNumOfBoom() {
         return b_numOfBoom;
+    }
+};
+
+class Player : public CSphere { //플레이어 저장하는 클래스
+private:
+    int playerLife = 3;//플레이어 목숨
+    int bombRange = 1;//폭탄 범위
+    int bombCap = 1;//폭탄용량
+    float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
+    int playerIndexX;
+    int playerIndexY;
+public:
+    void updatePlayerIndex() {
+        //0,0칸은 -4.5, 4.5임 여기서 플레이어 반지름을 빼서 벽에서 못나가게 하는걸 구하자
+        this->playerIndexX = (int)((this->center_x + 4.5f) / 0.6f);
+        this->playerIndexY = (int)((4.5f - this->center_z) / 0.6f);
+
+        string message = "x: " + to_string(this->playerIndexX) + " y: " + to_string(this->playerIndexY);
+        OutputDebugString((message + "\n").c_str());
+    }
+
+    int getPlayerIndexX() {
+        return playerIndexX;
+    }
+
+    int getPlayerIndexY() {
+        return playerIndexY;
+    }
+    
+    double getPlayerSpeed() { return this->playerSpeed; }
+
+    int getPlayerLife() {
+        return this-> playerLife;
+    }
+
+    void setPlayerLife() {
+        this->playerLife -= 1;
+        if (this->playerLife > 0) { // 목숨은 음수가 될 수 없음
+            
+        }
+        else {
+            //게임오버 실행
+        }
+    }
+
+    // Getter와 Setter for bombRange
+    int getBombRange() {
+        return bombRange;
+    }
+
+    void setBombRange(int range) {//setter 대신에 그냥 아이템 먹으면 이거 증가함
+        this->bombRange += 1;
+    }
+
+    // Getter와 Setter for bombCap
+    int getBombCap() {
+        return this-> bombCap;
+    }
+
+    void setBombCap(int cap) {//setter 대신에 그냥 아이템 먹으면 이거 증가함
+        this->bombCap += 1;
+    }
+
+
+
+    void setPlayerSpeed(float speed) {//증가는 얼마나 증가할지 생각해야겠는데
+        this->playerSpeed += 0.3f;
+    }
+
+    void ballUpdate(float timeDiff) override {
+        const float TIME_SCALE = 3.3; // 시간 스케일 조정
+        D3DXVECTOR3 cord = this->getCenter(); // 현재 공의 중심 좌표
+        double vx = abs(this->getVelocity_X());
+        double vz = abs(this->getVelocity_Z());
+        this->updatePlayerIndex();
+        if (vx > 0.01 || vz > 0.01) {
+            float tX = cord.x + TIME_SCALE * timeDiff * m_velocity_x;
+            float tZ = cord.z + TIME_SCALE * timeDiff * m_velocity_z;
+
+            //벽 나가는거 막는 코드
+            if (tX <= -4.5f + M_RADIUS) {
+                tX = -4.5 + M_RADIUS;
+            }
+            else if (tX >= 4.5 - M_RADIUS) {
+                tX = 4.5 - M_RADIUS;
+            }
+            if (tZ <= -4.5f + M_RADIUS) {
+                tZ = -4.5 + M_RADIUS;
+            }
+            else if (tZ >= 4.5 - M_RADIUS) {
+                tZ = 4.5 - M_RADIUS;
+            }
+
+            int indexX = this->playerIndexX;
+            int indexY = this->playerIndexY;
+            if (m_velocity_x < 0) {//좌
+                //즉 현재 인덱스 x의 감소에서 체크
+                //[][] 두번째 인덱스
+                if (indexX >= 1) {
+                    if (map[indexY][indexX-1] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                        //-4.2 + 0.6 * (indexX-1)가 상자의 center
+                        if (tX <= -4.2 + 0.6 * (indexX - 1) + M_RADIUS + 0.275f) {
+                            tX = -4.2 + 0.6 * (indexX - 1) + M_RADIUS + 0.275f;
+                        }
+                    }
+                }
+            }
+            else if (m_velocity_x > 0) {//우
+                if (indexX <= 13) {//14안넘게
+                    if (map[indexY][indexX + 1] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                        //-4.2 + 0.6 * (indexX-1)가 상자의 center
+                        if (tX <= -4.2 + 0.6 * (indexX + 1) - M_RADIUS - 0.275f) {
+                            tX = -4.2 + 0.6 * (indexX + 1) - M_RADIUS - 0.275f;
+                        }
+                    }
+                }
+            }
+            else if (m_velocity_z > 0) {//상
+                if (indexY >= 0) {
+                    if (map[indexY-1][indexX] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                        //-4.2 + 0.6 * (indexX-1)가 상자의 center
+                        if (tZ >= 4.2 - 0.6 * (indexY - 1) - M_RADIUS - 0.275f) {
+                            tZ = 4.2 - 0.6 * (indexY - 1) - M_RADIUS - 0.275f;
+                        }
+                    }
+                }
+            }
+            else if (m_velocity_z < 0) {//하
+                if (indexY <= 13) {//14안넘게
+                    if (map[indexY + 1 ][indexX] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                        //-4.2 + 0.6 * (indexX-1)가 상자의 center
+                        if (tZ <= 4.2 - 0.6 * (indexY + 1) + M_RADIUS + 0.275f) {
+                            tZ = 4.2 - 0.6 * (indexY + 1) + M_RADIUS + 0.275f;
+                        }
+                    }
+                }
+            }
+
+            
+
+            this->setCenter(tX, cord.y, tZ); // 새로운 위치 설정
+        }
+        
     }
 };
 
@@ -533,8 +590,8 @@ CWall boundaryLineByY[14];//15x15사이즈 세로눈금선
 
 
 double g_camera_pos[3] = { 0.0, 5.0, -8.0 };
-CSphere player[2];//플레이어 1p,2p
-CSphere   g_target_blueball;
+Player player[2];//플레이어 1p,2p
+
 
 int ss_y = 14;
 int ss_x = 12;
@@ -589,10 +646,10 @@ bool Setup()
     //한칸 사이 간격은 0.6이다
     //한칸이 즉 0.6*0.6
     for (int i = 0; i < 14; i++) {
-        if (false == boundaryLineByX[i].create(Device, -1, -1, 0.01f, 0.01f, 9, d3d::BLACK)) return false;
+        if (false == boundaryLineByX[i].create(Device, -1, -1, 0.05f, 0.01f, 9, d3d::BLACK)) return false;
         boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6*i, 0.12f, 0.0f);
 
-        if (false == boundaryLineByY[i].create(Device, -1, -1, 9, 0.01f, 0.01f, d3d::BLACK)) return false;
+        if (false == boundaryLineByY[i].create(Device, -1, -1, 9, 0.05f, 0.01f, d3d::BLACK)) return false;
         boundaryLineByY[i].setPosition(0.0f, 0.12f, -4.5f + 0.6 + 0.6 * i);
     }
     
@@ -614,9 +671,7 @@ bool Setup()
     if (false == player[1].create(Device, d3d::BLUE)) return false;
     player[1].setCenter(4.5f, (float)M_RADIUS, -3.5f);
     player[1].setPower(0, 0);
-    // create blue ball for set direction
-    if (false == g_target_blueball.create(Device, d3d::WHITE)) return false;
-    g_target_blueball.setCenter(.0f, (float)M_RADIUS, -4.0f);
+
 
     // light setting 
     D3DLIGHT9 lit;
@@ -638,9 +693,9 @@ bool Setup()
     //카메라 위치 고정할듯?
     // Position and aim the camera.
     //z가 좀 기울어지게 하는ㄴ 
-    D3DXVECTOR3 pos(0.0f, 13.0f, -0.0001f);
+    D3DXVECTOR3 pos(0.0f, 13.0f, -5.0f);
     D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
-    D3DXVECTOR3 up(0.0f, 0.1f, 0.0f);
+    D3DXVECTOR3 up(0.0f, 0.1f, 5.0f);
     D3DXMatrixLookAtLH(&g_mView, &pos, &target, &up);
     Device->SetTransform(D3DTS_VIEW, &g_mView);
 
@@ -708,7 +763,7 @@ bool Display(float timeDelta)
             
         }
         
-        g_target_blueball.draw(Device, g_mWorld);
+        
         //g_light.draw(Device);
         
         player[0].ballUpdate(timeDelta);
