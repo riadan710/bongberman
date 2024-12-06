@@ -385,15 +385,60 @@ private:
     ID3DXMesh* m_pBoundMesh;
 };
 
+class CExplosion : public CWall {
+private:
+    bool e_isActive = false;
+    //폭발 이펙트 활성화
+    float e_time = 0;
+    //생성 후 지난 시간
+    float e_setTime = 1;
+    //지속시간 세팅
+    
+public:
+
+    void activate(float x, float y, float z) {
+        e_isActive = true;
+        e_time = 0;
+        setPosition(x, y, z);
+    }
+
+    void explosionUpdate(float deltaTime) {
+        if (!e_isActive) return;
+
+        e_time += deltaTime;
+        if (e_time > e_setTime) {
+            e_isActive = false;
+        }
+    }
+
+    bool getActive() {
+        return e_isActive;
+    }
+};
+
 class CBoom : public CSphere {
 private:
     float b_time;
     bool b_isActive = false;
-    float b_setTime = 3;
+    float b_setTime = 2;
     int b_numOfBoom = 1;
     const int b_max = 10;
+    int b_indexX =0;
+    int b_indexZ =0;
+    int b_range = 1;
+    CExplosion explosion[5];
+    int numOfExp = 5;
 
 public:
+    bool createExplosion(IDirect3DDevice9* pDevice) {
+        for (int i = 0; i < numOfExp; i++) {
+            if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, d3d::RED)) return false;
+        }
+        return true;
+    }
+    //Explosion 생성
+
+
     void pressKey(float sx, float py, float sz) {
         if (!b_isActive) {
             this -> b_isActive = true;
@@ -401,7 +446,7 @@ public:
             this -> b_time = 0;
         }
     }
-    //F키 눌렀을 때
+    //키 눌렀을 때
 
     void boomUpdate(float timeDelta) {
         if (!b_isActive) {
@@ -410,7 +455,30 @@ public:
 
         b_time += timeDelta;
         if (b_time >= b_setTime) {
+
             b_isActive = false;
+
+            explosion[0].activate(-4.2 + 0.6*b_indexX, 0, 4.2 - 0.6*b_indexZ); // 폭탄 위치
+            for (int i = 0; i < b_range; i++) {
+                explosion[1 + i].activate(-4.2 + 0.6 * (b_indexX+1), 0, 4.2 - 0.6 * b_indexZ); // X +
+                explosion[2 + i].activate(-4.2 + 0.6 * (b_indexX-1), 0, 4.2 - 0.6 * b_indexZ); // X -
+                explosion[3 + i].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ+1)); // Z +
+                explosion[4 + i].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ-1)); // Z -
+            }
+        }
+    }
+
+    void updateExplosions(float timeDelta) {
+        for (int i = 0; i < 5; ++i) {
+            explosion[i].explosionUpdate(timeDelta);
+        }
+    }
+
+    void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
+        for (int i = 0; i < 5; ++i) {
+            if (explosion[i].getActive()) {
+                explosion[i].draw(pDevice, mWorld);
+            }
         }
     }
 
@@ -428,6 +496,11 @@ public:
 
     int getNumOfBoom() {
         return b_numOfBoom;
+    }
+
+    void setIndexXY(int indexX, int indexY) {
+        this->b_indexX = indexX;
+        this->b_indexZ = indexY;
     }
 };
 
@@ -534,7 +607,7 @@ CWall boundaryLineByY[14];//15x15사이즈 세로눈금선
 
 double g_camera_pos[3] = { 0.0, 5.0, -8.0 };
 CSphere player[2];//플레이어 1p,2p
-CSphere   g_target_blueball;
+CSphere g_target_blueball;
 
 int ss_y = 14;
 int ss_x = 12;
@@ -574,11 +647,11 @@ bool Setup()
     g_legowall[0].setPosition(0.0f, 0.12f, 4.56f);
     if (false == g_legowall[1].create(Device, -1, -1, 0.12f, WALL_THICKNESS, 9, d3d::DARKRED)) return false;
     g_legowall[1].setPosition(-4.56f, 0.12f, 0.0f);
-    
-    
+
+
     // Device ,float ix, float iz, float iwidth, float iheight, float idepth, D3DXCOLOR color = d3d::WHITE
     //가로길이, 벽 높이, 세로길이
-    if (false == g_legowall[2].create(Device, -1, -1, 0.12f, WALL_THICKNESS,9, d3d::DARKRED)) return false;
+    if (false == g_legowall[2].create(Device, -1, -1, 0.12f, WALL_THICKNESS, 9, d3d::DARKRED)) return false;
     g_legowall[2].setPosition(4.56f, 0.12f, 0.0f);
     if (false == g_legowall[3].create(Device, -1, -1, 9, WALL_THICKNESS, 0.12f, d3d::DARKRED)) return false;
     g_legowall[3].setPosition(0.0f, 0.12f, -4.56f);
@@ -590,17 +663,17 @@ bool Setup()
     //한칸이 즉 0.6*0.6
     for (int i = 0; i < 14; i++) {
         if (false == boundaryLineByX[i].create(Device, -1, -1, 0.01f, 0.01f, 9, d3d::BLACK)) return false;
-        boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6*i, 0.12f, 0.0f);
+        boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6 * i, 0.12f, 0.0f);
 
         if (false == boundaryLineByY[i].create(Device, -1, -1, 9, 0.01f, 0.01f, d3d::BLACK)) return false;
         boundaryLineByY[i].setPosition(0.0f, 0.12f, -4.5f + 0.6 + 0.6 * i);
     }
-    
-    
 
-    
 
-    
+
+
+
+
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
@@ -609,6 +682,8 @@ bool Setup()
 
     //test용 boom
     if (false == testBoom.create(Device, d3d::BLACK)) return false;
+    if (false == testBoom.createExplosion(Device))return false;
+
 
     //플레이어 2 생성 
     if (false == player[1].create(Device, d3d::BLUE)) return false;
@@ -722,6 +797,8 @@ bool Display(float timeDelta)
         }
         testBoom.boomUpdate(timeDelta);
         //boom의 active 값이 true인 경우에만 보이도록 설정
+        testBoom.drawExplosions(Device, g_mWorld);
+        testBoom.updateExplosions(timeDelta);
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
@@ -786,6 +863,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 'F':
             player[0].updatePlayerIndex();
             testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), player[0].getCenter().y - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+            testBoom.setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
             break;
 
         case VK_UP:
