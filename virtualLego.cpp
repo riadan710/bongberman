@@ -41,6 +41,7 @@ D3DXMATRIX g_mProj;
 
 // 공 반지름 및 기타 상수 정의
 #define M_RADIUS 0.29   // 공 반지름
+#define P_RADIUS 0.21   //플레이어 머리용 반지름
 #define PI 3.14159265
 #define M_HEIGHT 0.01
 #define DECREASE_RATE 1 
@@ -55,7 +56,7 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -137,17 +138,17 @@ public:
             float tZ = cord.z + TIME_SCALE * timeDiff * m_velocity_z;
 
             
-            if (tX <= -4.5f + M_RADIUS) {
-                tX = -4.5 + M_RADIUS;
+            if (tX <= -4.5f + P_RADIUS) {
+                tX = -4.5 + P_RADIUS;
             }
-            else if (tX >= 4.5 - M_RADIUS) {
-                tX = 4.5 - M_RADIUS;
+            else if (tX >= 4.5 - P_RADIUS) {
+                tX = 4.5 - P_RADIUS;
             }
-            if (tZ <= -4.5f + M_RADIUS) {
-                tZ = -4.5 + M_RADIUS;
+            if (tZ <= -4.5f + P_RADIUS) {
+                tZ = -4.5 + P_RADIUS;
             }
-            else if (tZ >= 4.5 - M_RADIUS) {
-                tZ = 4.5 - M_RADIUS;
+            else if (tZ >= 4.5 - P_RADIUS) {
+                tZ = 4.5 - P_RADIUS;
             }
             this->setCenter(tX, cord.y, tZ); // 새로운 위치 설정
         }
@@ -171,7 +172,7 @@ public:
         setLocalTransform(m);
     }
     
-    float getRadius(void) const { return (float)(M_RADIUS); }
+    float virtual getRadius(void) const { return (float)(M_RADIUS); }
     const D3DXMATRIX& getLocalTransform(void) const { return m_mLocal; }
     void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
     D3DXVECTOR3 getCenter(void) const {
@@ -247,33 +248,7 @@ public:
         m_pBoundMesh->DrawSubset(0);
     }
 
-    int hasIntersected(CSphere& ball)
-    {
-        
-        //가로가 더 긴경우, center y + 반지름 + 두께/2가 y를 넘으면 
-        //벽은 그냥 plane을 기준으로 x나 y가 특정위치에 도달했는지 확인하면됨
-        
-        D3DXVECTOR3 center = ball.getCenter();
-        
-        if (center.z + M_RADIUS >= PLANE_Y / 2.0f) {//벽의 위
-            ball.setCenter(center.x, center.y, PLANE_Y / 2.0f - M_RADIUS);
-            return 1;
-        }
-        else if (center.x + M_RADIUS  > PLANE_X / 2.0f) {//벽 오른쪽
-            ball.setCenter(PLANE_X / 2.0f - M_RADIUS, center.y, center.z);
-            return 2;
-        }
-        else if (center.x - M_RADIUS < -PLANE_X / 2.0f) {//벽 왼쪽
-            ball.setCenter(-PLANE_X / 2.0f + M_RADIUS, center.y, center.z);
-            return 3;
-        }
-
-
-
-        //return distance <= radiusSum;
-        // Insert your code here.
-        return 0;
-    }
+    
 
     
 
@@ -363,6 +338,8 @@ public:
         OutputDebugString((message + "\n").c_str());
     }
 
+    
+
     int getPlayerIndexX() {
         return playerIndexX;
     }
@@ -411,6 +388,8 @@ public:
         this->playerSpeed += 0.3f;
     }
 
+    float getRadius(void)  const override { return (float)(P_RADIUS); };
+
     void ballUpdate(float timeDiff) override {
         const float TIME_SCALE = 3.3; // 시간 스케일 조정
         D3DXVECTOR3 cord = this->getCenter(); // 현재 공의 중심 좌표
@@ -422,17 +401,17 @@ public:
             float tZ = cord.z + TIME_SCALE * timeDiff * m_velocity_z;
 
             //벽 나가는거 막는 코드
-            if (tX <= -4.5f + M_RADIUS) {
-                tX = -4.5 + M_RADIUS;
+            if (tX <= -4.5f + P_RADIUS) {
+                tX = -4.5 + P_RADIUS;
             }
-            else if (tX >= 4.5 - M_RADIUS) {
-                tX = 4.5 - M_RADIUS;
+            else if (tX >= 4.5 - P_RADIUS) {
+                tX = 4.5 - P_RADIUS;
             }
-            if (tZ <= -4.5f + M_RADIUS) {
-                tZ = -4.5 + M_RADIUS;
+            if (tZ <= -4.5f + P_RADIUS) {
+                tZ = -4.5 + P_RADIUS;
             }
-            else if (tZ >= 4.5 - M_RADIUS) {
-                tZ = 4.5 - M_RADIUS;
+            else if (tZ >= 4.5 - P_RADIUS) {
+                tZ = 4.5 - P_RADIUS;
             }
 
             int indexX = this->playerIndexX;
@@ -441,40 +420,40 @@ public:
                 //즉 현재 인덱스 x의 감소에서 체크
                 //[][] 두번째 인덱스
                 if (indexX >= 1) {
-                    if (map[indexY][indexX-1] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                    if (map[indexY][indexX-1] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
                         //-4.2 + 0.6 * (indexX-1)가 상자의 center
-                        if (tX <= -4.2 + 0.6 * (indexX - 1) + M_RADIUS + 0.275f) {
-                            tX = -4.2 + 0.6 * (indexX - 1) + M_RADIUS + 0.275f;
+                        if (tX <= -4.2 + 0.6 * (indexX - 1) + 0.15f + 0.275f) {
+                            tX = -4.2 + 0.6 * (indexX - 1) + 0.15f + 0.275f;
                         }
                     }
                 }
             }
             else if (m_velocity_x > 0) {//우
                 if (indexX <= 13) {//14안넘게
-                    if (map[indexY][indexX + 1] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
-                        //-4.2 + 0.6 * (indexX-1)가 상자의 center
-                        if (tX <= -4.2 + 0.6 * (indexX + 1) - M_RADIUS - 0.275f) {
-                            tX = -4.2 + 0.6 * (indexX + 1) - M_RADIUS - 0.275f;
+                    if (map[indexY][indexX + 1] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                        //-4.2 + 0.6 * (indexX+1)가 상자의 center
+                        if (tX >= -4.2 + 0.6 * (indexX + 1) - 0.15f - 0.275f) {
+                            tX = -4.2 + 0.6 * (indexX + 1) - 0.15f - 0.275f;
                         }
                     }
                 }
             }
             else if (m_velocity_z > 0) {//상
                 if (indexY >= 0) {
-                    if (map[indexY-1][indexX] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                    if (map[indexY-1][indexX] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
                         //-4.2 + 0.6 * (indexX-1)가 상자의 center
-                        if (tZ >= 4.2 - 0.6 * (indexY - 1) - M_RADIUS - 0.275f) {
-                            tZ = 4.2 - 0.6 * (indexY - 1) - M_RADIUS - 0.275f;
+                        if (tZ >= 4.2 - 0.6 * (indexY - 1) - 0.15f - 0.275f) {
+                            tZ = 4.2 - 0.6 * (indexY - 1) - 0.15f - 0.275f;
                         }
                     }
                 }
             }
             else if (m_velocity_z < 0) {//하
                 if (indexY <= 13) {//14안넘게
-                    if (map[indexY + 1 ][indexX] == 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                    if (map[indexY + 1 ][indexX] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
                         //-4.2 + 0.6 * (indexX-1)가 상자의 center
-                        if (tZ <= 4.2 - 0.6 * (indexY + 1) + M_RADIUS + 0.275f) {
-                            tZ = 4.2 - 0.6 * (indexY + 1) + M_RADIUS + 0.275f;
+                        if (tZ <= 4.2 - 0.6 * (indexY + 1) + 0.15f + 0.275f) {
+                            tZ = 4.2 - 0.6 * (indexY + 1) + 0.15f + 0.275f;
                         }
                     }
                 }
@@ -485,6 +464,10 @@ public:
             this->setCenter(tX, cord.y, tZ); // 새로운 위치 설정
         }
         
+    }
+    void bindingPlayerBody(CWall& body) {
+        body.setPosition(this->center_x, 0.3f, this->center_z);
+
     }
 };
 
@@ -580,6 +563,7 @@ private:
 // -----------------------------------------------------------------------------
 CWall   g_legoPlane;
 CWall   g_legowall[4];
+CWall   playerBody[2];
 
 
 CLight   g_light;
@@ -625,6 +609,7 @@ bool Setup()
     // create plane and set the position
     if (false == g_legoPlane.create(Device, -1, -1, 9, 0.03f, 9, d3d::WHITE)) return false;
     g_legoPlane.setPosition(0.0f, -0.0006f / 5, 0.0f);
+    //-0.00012 + 0.015
 
     // create walls and set the position. note that there are four walls
     if (false == g_legowall[0].create(Device, -1, -1, 9, WALL_THICKNESS, 0.12f, d3d::DARKRED)) return false;
@@ -647,10 +632,10 @@ bool Setup()
     //한칸이 즉 0.6*0.6
     for (int i = 0; i < 14; i++) {
         if (false == boundaryLineByX[i].create(Device, -1, -1, 0.05f, 0.01f, 9, d3d::BLACK)) return false;
-        boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6*i, 0.12f, 0.0f);
+        boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6*i, 0.015f, 0.0f);
 
         if (false == boundaryLineByY[i].create(Device, -1, -1, 9, 0.05f, 0.01f, d3d::BLACK)) return false;
-        boundaryLineByY[i].setPosition(0.0f, 0.12f, -4.5f + 0.6 + 0.6 * i);
+        boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
     }
     
     
@@ -661,16 +646,22 @@ bool Setup()
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
-    player[0].setCenter(.0f, (float)M_RADIUS, -3.5f);
+    player[0].setCenter(.0f, (float)P_RADIUS + 0.5f, -3.5f);
     player[0].setPower(0, 0);
+
+    if (false == playerBody[0].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::RED)) return false;
+    playerBody[0].setPosition(0.0f, 0.3f, 0.0f);
+    
 
     //test용 boom
     if (false == testBoom.create(Device, d3d::BLACK)) return false;
 
     //플레이어 2 생성 
     if (false == player[1].create(Device, d3d::BLUE)) return false;
-    player[1].setCenter(4.5f, (float)M_RADIUS, -3.5f);
+    player[1].setCenter(4.5f, (float)P_RADIUS + 0.5f, -3.5f);
     player[1].setPower(0, 0);
+    if (false == playerBody[1].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::BLUE)) return false;
+    playerBody[1].setPosition(0.0f, 0.3f, 0.0f);
 
 
     // light setting 
@@ -681,7 +672,7 @@ bool Setup()
     lit.Specular = d3d::WHITE * 0.9f;
     lit.Ambient = d3d::WHITE * 0.9f;
     lit.Position = D3DXVECTOR3(0.0f, 3.0f, 0.0f);
-    lit.Range = 100.0f;
+    lit.Range = 1000.0f;
     lit.Attenuation0 = 0.0f;
     lit.Attenuation1 = 0.9f;
     lit.Attenuation2 = 0.0f;
@@ -693,7 +684,7 @@ bool Setup()
     //카메라 위치 고정할듯?
     // Position and aim the camera.
     //z가 좀 기울어지게 하는ㄴ 
-    D3DXVECTOR3 pos(0.0f, 13.0f, -5.0f);
+    D3DXVECTOR3 pos(0.0f, 10.0f, -10.0f);
     D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
     D3DXVECTOR3 up(0.0f, 0.1f, 5.0f);
     D3DXMatrixLookAtLH(&g_mView, &pos, &target, &up);
@@ -744,7 +735,7 @@ bool Display(float timeDelta)
 
         // update the position of each ball. during update, check whether each ball hit by walls.
         
-
+        
         
 
         
@@ -766,11 +757,16 @@ bool Display(float timeDelta)
         
         //g_light.draw(Device);
         
+
+        //플레이어 출력, 몸통도 같이
         player[0].ballUpdate(timeDelta);
         player[0].draw(Device, g_mWorld);
-
+        playerBody[0].draw(Device, g_mWorld);
+        player[0].bindingPlayerBody(playerBody[0]);
         player[1].ballUpdate(timeDelta);
         player[1].draw(Device, g_mWorld);
+        playerBody[1].draw(Device, g_mWorld);
+        player[1].bindingPlayerBody(playerBody[1]);
 
         if (testBoom.getActive()) {
             testBoom.draw(Device, g_mWorld);
@@ -840,7 +836,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case 'F':
             player[0].updatePlayerIndex();
-            testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), player[0].getCenter().y - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+            testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), M_RADIUS, 4.2 - 0.6 * player[0].getPlayerIndexY());
             break;
 
         case VK_UP:
