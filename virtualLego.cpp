@@ -961,7 +961,11 @@ bool Display(float timeDelta)
             }
             testBoom.boomUpdate(timeDelta);
             testBoom.drawExplosions(Device, g_mWorld);
-            testBoom.updateExplosions(timeDelta);
+            player[0].updatePlayerIndex();
+            bool p1 = testBoom.updateExplosions(timeDelta, player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+            if (p1) {
+                player[0].setPlayerLife();
+            }
 
             // 플레이어 라이프 표시
             if (g_pFontLarge) {
@@ -1059,8 +1063,8 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             else if (g_GameState == STATE_GAMEOVER) {
                 // 게임 재시작
                 g_GameState = STATE_MENU;
-                // player[0].setPlayerLife(3);
-                // player[1].setPlayerLife(3);
+                //player[0].setPlayerLife(3);
+                //player[1].setPlayerLife(3);
             }
             break;
         case 'W':
