@@ -48,6 +48,7 @@ D3DXMATRIX g_mProj;
 #define PLANE_X 6   //게임판의 x
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
+#define BOX_LENGTH 0.5  // 상자 길이
 
 //맵 배치에 사용
 int map[15][15] = {
@@ -589,6 +590,76 @@ public:
     }
 };
 
+class ItemBox {
+private:
+    float m_length;  // 정육면체 한 변의 길이
+    D3DXMATRIX m_mLocal;  // 로컬 변환 행렬
+    D3DMATERIAL9 m_mtrl;   // 재질 정보
+    ID3DXMesh* m_pBoxMesh; // 정육면체 메쉬 포인터
+
+public:
+    // 생성자
+    ItemBox() : m_length(BOX_LENGTH), m_pBoxMesh(nullptr) {
+        ZeroMemory(&m_mtrl, sizeof(m_mtrl));
+        D3DXMatrixIdentity(&m_mLocal); // 로컬 변환 행렬 초기화
+    }
+
+    // 정육면체 생성
+    bool create(IDirect3DDevice9* pDevice, D3DXCOLOR color = D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)) {
+        if (pDevice == nullptr) return false;
+
+        // 정육면체 재질 설정
+        m_mtrl.Ambient = color;
+        m_mtrl.Diffuse = color;
+        m_mtrl.Specular = color;
+        m_mtrl.Emissive = D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f);
+        m_mtrl.Power = 5.0f;
+
+        // 정육면체 메쉬 생성
+        if (FAILED(D3DXCreateBox(pDevice, m_length, m_length, m_length, &m_pBoxMesh, nullptr))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // 정육면체 그리기
+    void draw(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
+        if (pDevice == nullptr || m_pBoxMesh == nullptr) return;
+
+        pDevice->SetTransform(D3DTS_WORLD, &mWorld);  // 월드 변환 설정
+        pDevice->MultiplyTransform(D3DTS_WORLD, &m_mLocal);  // 로컬 변환 적용
+        pDevice->SetMaterial(&m_mtrl);  // 재질 설정
+        m_pBoxMesh->DrawSubset(0);  // 메쉬 그리기
+    }
+
+    // 위치 설정
+    void setPosition(float x, float y, float z) {
+        D3DXMATRIX m;
+        D3DXMatrixTranslation(&m, x, y, z);  // 주어진 위치로 이동
+        m_mLocal = m;  // 로컬 변환 행렬 설정
+    }
+
+    // 위치 및 변환 관련 메서드
+    const D3DXMATRIX& getLocalTransform() const {
+        return m_mLocal;
+    }
+
+    // 정육면체의 한 변의 길이 반환
+    float getLength() const {
+        return m_length;
+    }
+
+    // 정육면체 메쉬 삭제
+    void destroy() {
+        if (m_pBoxMesh) {
+            m_pBoxMesh->Release();
+            m_pBoxMesh = nullptr;
+        }
+    }
+};
+
+
 // -----------------------------------------------------------------------------
 // CLight class definition
 // -----------------------------------------------------------------------------
@@ -704,6 +775,8 @@ int validCount = 0;
 
 CBoom testBoom;
 
+ItemBox itembox;
+
 
 
 // -----------------------------------------------------------------------------
@@ -759,10 +832,9 @@ bool Setup()
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
     }
 
-
-
-
-
+    // 아이템 상자 생성
+    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox.setPosition(0.0f, 0.5f, 0.0f);
 
 
     //플레이어 1 생성
@@ -842,7 +914,7 @@ void Cleanup(void)
 // timeDelta represents the time between the current image frame and the last image frame.
 // timeDelta는 현재 이미지와 마지막 이미지의 프레임사이를 나타낸다.
 // the distance of moving balls should be "velocity * timeDelta"
-// 움직인 고으이 거리는 velocity * timeDelta이다.
+// 움직인 공의 거리는 velocity * timeDelta이다.
 bool Display(float timeDelta)
 {
     int i = 0;
@@ -902,6 +974,9 @@ bool Display(float timeDelta)
         if (p1) {
             player[0].setPlayerLife();
         }
+
+        // 상자 생성
+        itembox.draw(Device, g_mWorld);
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
