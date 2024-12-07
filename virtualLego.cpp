@@ -775,8 +775,9 @@ int validCount = 0;
 
 CBoom testBoom;
 
+vector<ItemBox> itemBoxes;
 ItemBox itembox;
-
+int itemBox_num = 15;
 
 
 // -----------------------------------------------------------------------------
@@ -832,9 +833,31 @@ bool Setup()
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
     }
 
-    // 아이템 상자 생성
-    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-    itembox.setPosition(0.0f, 0.5f, 0.0f);
+    float startX = -4.1f;
+    float startZ = 3.8f;
+    float intervalX = 0.5857f;  // X 간격
+    float intervalZ = 0.5786f;  // Z 간격
+
+    // 아이템 상자 랜덤 배치
+    for (int i = 0; i < itemBox_num; i++) {
+        ItemBox itembox;  // 아이템 상자 객체 생성
+
+        // 랜덤 (i, j) 좌표 생성
+        int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
+        int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+
+        // (randomI, randomJ)에 해당하는 정확한 좌표 계산
+        float randomX = startX + randomI * intervalX;  // X 좌표
+        float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
+
+        itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+        itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+
+        itemBoxes.push_back(itembox);  // 벡터에 추가
+    }
+
+    //itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    //itembox.setPosition(4.1f, 0.5f, 3.8f);
 
 
     //플레이어 1 생성
@@ -975,8 +998,12 @@ bool Display(float timeDelta)
             player[0].setPlayerLife();
         }
 
-        // 상자 생성
-        itembox.draw(Device, g_mWorld);
+        
+        // 아이템 상자들 그리기
+        for (int i = 0; i < itemBox_num; i++) {
+            itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+        }
+        //itembox.draw(Device, g_mWorld);
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
