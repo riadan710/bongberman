@@ -19,6 +19,7 @@
 #include <windows.h>
 #include <string>
 
+
 using namespace std;
 // Direct3D 장치 포인터
 IDirect3DDevice9* Device = NULL;
@@ -64,10 +65,22 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 //일단 폭탄은 2로 설정
+
+
+//게임상태 정의
+enum GameState {
+    STATE_MENU,    //인터페이스
+    STATE_GAME,    //게임중
+    STATE_GAMEOVER //게임오버
+};
+
+GameState g_GameState = STATE_MENU;
+
+
 
 
 // -----------------------------------------------------------------------------
@@ -79,7 +92,7 @@ protected:
     float m_radius;                     // 공 반지름
     float m_velocity_x;                 // x축 속도
     float m_velocity_z;                 // z축 속도
-    
+
 public:
     // 생성자: 공의 초기 상태를 설정
     CSphere(void) {
@@ -138,7 +151,7 @@ public:
             float tX = cord.x + TIME_SCALE * timeDiff * m_velocity_x;
             float tZ = cord.z + TIME_SCALE * timeDiff * m_velocity_z;
 
-            
+
             if (tX <= -4.5f + P_RADIUS) {
                 tX = -4.5 + P_RADIUS;
             }
@@ -157,7 +170,7 @@ public:
             this->setPower(0, 0); // 속도가 매우 낮으면 멈춤
         }
 
-        double rate = 1 - (1 - DECREASE_RATE) * timeDiff * 400; 
+        double rate = 1 - (1 - DECREASE_RATE) * timeDiff * 400;
         if (rate < 0) rate = 0;
         this->setPower(getVelocity_X() * rate, getVelocity_Z() * rate);
     }
@@ -172,14 +185,14 @@ public:
         D3DXMatrixTranslation(&m, x, y, z);
         setLocalTransform(m);
     }
-    
+
     float virtual getRadius(void) const { return (float)(M_RADIUS); }
     const D3DXMATRIX& getLocalTransform(void) const { return m_mLocal; }
     void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
     D3DXVECTOR3 getCenter(void) const {
         return D3DXVECTOR3(center_x, center_y, center_z);
     }
-    
+
 
 private:
     D3DXMATRIX m_mLocal;    // 로컬 변환 행렬
@@ -249,9 +262,9 @@ public:
         m_pBoundMesh->DrawSubset(0);
     }
 
-    
 
-    
+
+
 
     void setPosition(float x, float y, float z)
     {
@@ -265,7 +278,7 @@ public:
 
     float getHeight(void) const { return M_HEIGHT; }
 
-    
+
 
 private:
     void setLocalTransform(const D3DXMATRIX& mLocal) { m_mLocal = mLocal; }
@@ -286,7 +299,7 @@ private:
 
     int e_indexX;
     int e_indexZ;
-    
+
 public:
 
     void activate(float x, float y, float z) {
@@ -331,6 +344,7 @@ private:
     float b_setTime = 2;
     int b_numOfBoom = 1;
     const int b_max = 10;
+
     int b_indexX =0;
     int b_indexZ =0;
     int b_range = 2;
@@ -339,6 +353,7 @@ private:
 
     bool player1 = false;
     bool player2 = false;
+
 
 public:
     bool createExplosion(IDirect3DDevice9* pDevice) {
@@ -356,7 +371,7 @@ public:
             player2 = false;
             this -> b_isActive = true;
             setCenter(sx, py, sz);
-            this -> b_time = 0;
+            this->b_time = 0;
             map[b_indexZ][b_indexX] = 2;
         }
     }
@@ -453,7 +468,7 @@ public:
         //OutputDebugString((message + "\n").c_str());
     }
 
-    
+
 
     int getPlayerIndexX() {
         return playerIndexX;
@@ -462,11 +477,11 @@ public:
     int getPlayerIndexY() {
         return playerIndexY;
     }
-    
+
     double getPlayerSpeed() { return this->playerSpeed; }
 
     int getPlayerLife() {
-        return this-> playerLife;
+        return this->playerLife;
     }
 
     void setPlayerLife() {
@@ -475,7 +490,7 @@ public:
         sprintf(buffer, "Player Life: %d\n", this->playerLife);
         OutputDebugString(buffer);
         if (this->playerLife > 0) { // 목숨은 음수가 될 수 없음
-            
+
         }
         else {
             //게임오버 실행
@@ -493,7 +508,7 @@ public:
 
     // Getter와 Setter for bombCap
     int getBombCap() {
-        return this-> bombCap;
+        return this->bombCap;
     }
 
     void setBombCap(int cap) {//setter 대신에 그냥 아이템 먹으면 이거 증가함
@@ -538,7 +553,7 @@ public:
                 //즉 현재 인덱스 x의 감소에서 체크
                 //[][] 두번째 인덱스
                 if (indexX >= 1) {
-                    if (map[indexY][indexX-1] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                    if (map[indexY][indexX - 1] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
                         //-4.2 + 0.6 * (indexX-1)가 상자의 center
                         if (tX <= -4.2 + 0.6 * (indexX - 1) + 0.15f + 0.275f) {
                             tX = -4.2 + 0.6 * (indexX - 1) + 0.15f + 0.275f;
@@ -558,7 +573,7 @@ public:
             }
             else if (m_velocity_z > 0) {//상
                 if (indexY >= 0) {
-                    if (map[indexY-1][indexX] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                    if (map[indexY - 1][indexX] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
                         //-4.2 + 0.6 * (indexX-1)가 상자의 center
                         if (tZ >= 4.2 - 0.6 * (indexY - 1) - 0.15f - 0.275f) {
                             tZ = 4.2 - 0.6 * (indexY - 1) - 0.15f - 0.275f;
@@ -568,7 +583,7 @@ public:
             }
             else if (m_velocity_z < 0) {//하
                 if (indexY <= 13) {//14안넘게
-                    if (map[indexY + 1 ][indexX] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
+                    if (map[indexY + 1][indexX] >= 1) {//박스나 폭탄 지정하는 상수면 이동불가
                         //-4.2 + 0.6 * (indexX-1)가 상자의 center
                         if (tZ <= 4.2 - 0.6 * (indexY + 1) + 0.15f + 0.275f) {
                             tZ = 4.2 - 0.6 * (indexY + 1) + 0.15f + 0.275f;
@@ -577,11 +592,11 @@ public:
                 }
             }
 
-            
+
 
             this->setCenter(tX, cord.y, tZ); // 새로운 위치 설정
         }
-        
+
     }
     void bindingPlayerBody(CWall& body) {
         body.setPosition(this->center_x, 0.3f, this->center_z);
@@ -705,6 +720,10 @@ int validCount = 0;
 CBoom testBoom;
 
 
+ID3DXFont* g_pFont = NULL; //폰트1 변수
+ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
+
+
 
 // -----------------------------------------------------------------------------
 // Functions
@@ -753,7 +772,7 @@ bool Setup()
     for (int i = 0; i < 14; i++) {
 
         if (false == boundaryLineByX[i].create(Device, -1, -1, 0.05f, 0.01f, 9, d3d::BLACK)) return false;
-        boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6*i, 0.015f, 0.0f);
+        boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6 * i, 0.015f, 0.0f);
 
         if (false == boundaryLineByY[i].create(Device, -1, -1, 9, 0.05f, 0.01f, d3d::BLACK)) return false;
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
@@ -772,7 +791,7 @@ bool Setup()
 
     if (false == playerBody[0].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::RED)) return false;
     playerBody[0].setPosition(0.0f, 0.3f, 0.0f);
-    
+
 
     //test용 boom
     if (false == testBoom.create(Device, d3d::BLACK)) return false;
@@ -802,7 +821,7 @@ bool Setup()
     if (false == g_light.create(Device, lit))
         return false;
 
-    
+
 
     //카메라 위치 고정할듯?
     // Position and aim the camera.
@@ -824,6 +843,43 @@ bool Setup()
     Device->SetRenderState(D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
 
     g_light.setLight(Device, g_mWorld);
+
+
+    //폰트1
+    D3DXFONT_DESC fd;
+    ZeroMemory(&fd, sizeof(fd));
+    fd.Height = 24; // 글자 크기
+    fd.Width = 0;
+    fd.Weight = FW_BOLD;
+    fd.CharSet = DEFAULT_CHARSET;
+    fd.OutputPrecision = OUT_DEFAULT_PRECIS;
+    fd.Quality = DEFAULT_QUALITY;
+    fd.PitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+    strcpy_s(fd.FaceName, "Arial");
+
+    if (FAILED(D3DXCreateFontIndirect(Device, &fd, &g_pFont))) {
+        MessageBox(0, "Font creation failed", 0, 0);
+        return false;
+    }
+
+    //폰트2
+    D3DXFONT_DESC fdLarge;
+    ZeroMemory(&fdLarge, sizeof(fdLarge));
+    fdLarge.Height = 48; // 글자 크기 크게
+    fdLarge.Width = 0;
+    fdLarge.Weight = FW_BOLD;
+    fdLarge.CharSet = DEFAULT_CHARSET;
+    fdLarge.OutputPrecision = OUT_DEFAULT_PRECIS;
+    fdLarge.Quality = DEFAULT_QUALITY;
+    fdLarge.PitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+    strcpy_s(fdLarge.FaceName, "Arial");
+
+    if (FAILED(D3DXCreateFontIndirect(Device, &fdLarge, &g_pFontLarge))) {
+        MessageBox(0, "Large Font creation failed", 0, 0);
+        return false;
+    }
+
+
     return true;
 }
 
@@ -835,7 +891,7 @@ void Cleanup(void)
     }
     destroyAllLegoBlock();
     g_light.destroy();
-    
+
 }
 
 
@@ -847,53 +903,104 @@ bool Display(float timeDelta)
 {
     int i = 0;
     int j = 0;
-    
 
-    
+
+
 
     if (Device)
     {
         Device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00afafaf, 1.0f, 0);
         Device->BeginScene();
 
-        // update the position of each ball. during update, check whether each ball hit by walls.
-        
-        
-        
+        // 게임 상태에 따른 화면 렌더링 분기
+        switch (g_GameState) {
+        case STATE_MENU:
+        {
+            RECT rc;
+            SetRect(&rc, 0, Height / 3, Width, Height / 3 + 100);
 
-        
+            //제목
+            if (g_pFontLarge) {
+                g_pFontLarge->DrawText(NULL, "BOMBER GAME", -1, &rc,
+                    DT_CENTER | DT_VCENTER | DT_SINGLELINE, D3DCOLOR_XRGB(255, 255, 0));
+            }
 
-        
-        for (int i = 0; i < 14; i++) {
-            boundaryLineByX[i].draw(Device, g_mWorld);
+            //시작안내
+            RECT rc2;
+            //가운데보다 약간 아래 부분에 표시하기 위해 top 값을 Height/4 + space
+            SetRect(&rc2, 0, Height / 3 + 100, Width, Height / 4 + 200);
+            if (g_pFont) {
+                g_pFont->DrawText(NULL, "Press ENTER to start", -1, &rc2,
+                    DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
+            }
+            break;
+        }
+        case STATE_GAME:  //게임중
+        {
+            for (int i = 0; i < 14; i++) {
+                boundaryLineByX[i].draw(Device, g_mWorld);
+                boundaryLineByY[i].draw(Device, g_mWorld);
+            }
 
-            boundaryLineByY[i].draw(Device, g_mWorld);
+            g_legoPlane.draw(Device, g_mWorld);
+            for (i = 0; i < 4; i++) {
+                g_legowall[i].draw(Device, g_mWorld);
+            }
+
+            player[0].ballUpdate(timeDelta);
+            player[0].draw(Device, g_mWorld);
+            playerBody[0].draw(Device, g_mWorld);
+            player[0].bindingPlayerBody(playerBody[0]);
+            player[1].ballUpdate(timeDelta);
+            player[1].draw(Device, g_mWorld);
+            playerBody[1].draw(Device, g_mWorld);
+            player[1].bindingPlayerBody(playerBody[1]);
+
+            if (testBoom.getActive()) {
+                testBoom.draw(Device, g_mWorld);
+            }
+            testBoom.boomUpdate(timeDelta);
+            testBoom.drawExplosions(Device, g_mWorld);
+            testBoom.updateExplosions(timeDelta);
+
+            // 플레이어 라이프 표시
+            if (g_pFontLarge) {
+                RECT lifeRect;
+                SetRect(&lifeRect, 10, 10, 0, 0); // 왼쪽 상단 근처
+                char lifeText[128];
+                sprintf_s(lifeText, "P1 Life: %d", player[0].getPlayerLife());
+                // 플레이어 1 목숨: 빨간색
+                g_pFontLarge->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0));
+
+                SetRect(&lifeRect, 10, 70, 0, 0); // P1 목숨 아래쪽에 P2 목숨 표시
+                sprintf_s(lifeText, "P2 Life: %d", player[1].getPlayerLife());
+                // 플레이어 2 목숨: 파란색
+                g_pFontLarge->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(0, 0, 255));
+            }
+
+            // 플레이어 목숨 검사 후 STATE_GAMEOVER 전환 로직
+            if (player[0].getPlayerLife() <= 0 || player[1].getPlayerLife() <= 0) {
+                g_GameState = STATE_GAMEOVER;
+            }
+
+            break;
+        }
+        case STATE_GAMEOVER:  //게임오버화면
+        {
+            if (g_pFont) {
+                RECT rc; SetRect(&rc, 50, 50, 0, 0);
+                const char* winner = (player[0].getPlayerLife() > 0) ? "Player1" : "Player2";
+                char msg[256];
+                sprintf_s(msg, "%s Wins!", winner);
+                g_pFont->DrawText(NULL, msg, -1, &rc, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0));
+
+                rc.top += 30;
+                g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc, DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
+            }
+            break;
+        }
         }
 
-        // draw plane, walls, and spheres
-        g_legoPlane.draw(Device, g_mWorld);
-        for (i = 0; i < 4; i++) {
-            g_legowall[i].draw(Device, g_mWorld);
-            
-        }
-        
-        
-        //g_light.draw(Device);
-        
-
-        //플레이어 출력, 몸통도 같이
-        player[0].ballUpdate(timeDelta);
-        player[0].draw(Device, g_mWorld);
-        playerBody[0].draw(Device, g_mWorld);
-        player[0].bindingPlayerBody(playerBody[0]);
-        player[1].ballUpdate(timeDelta);
-        player[1].draw(Device, g_mWorld);
-        playerBody[1].draw(Device, g_mWorld);
-        player[1].bindingPlayerBody(playerBody[1]);
-
-        if (testBoom.getActive()) {
-            testBoom.draw(Device, g_mWorld);
-        }
         testBoom.boomUpdate(timeDelta);
         //boom의 active 값이 true인 경우에만 보이도록 설정
         testBoom.drawExplosions(Device, g_mWorld);
@@ -943,10 +1050,17 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ::DestroyWindow(hwnd);
             break;
         case VK_RETURN:
-            if (NULL != Device) {
-                wire = !wire;
-                Device->SetRenderState(D3DRS_FILLMODE,
-                    (wire ? D3DFILL_WIREFRAME : D3DFILL_SOLID));
+            if (g_GameState == STATE_MENU) {
+                g_GameState = STATE_GAME;
+                player[0].setCenter(.0f, (float)P_RADIUS + 0.5f, -3.5f);
+                //player[0].setPlayerLife(3); 
+                //player[1].setPlayerLife(3); 
+            }
+            else if (g_GameState == STATE_GAMEOVER) {
+                // 게임 재시작
+                g_GameState = STATE_MENU;
+                // player[0].setPlayerLife(3);
+                // player[1].setPlayerLife(3);
             }
             break;
         case 'W':
@@ -956,9 +1070,9 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].setPower(-playerOneSp, 0);
             break;
         case 'S':
-            player[0].setPower(0, - playerOneSp);
+            player[0].setPower(0, -playerOneSp);
             break;
-            
+
         case 'D':
             player[0].setPower(playerOneSp, 0);
             break;
@@ -967,9 +1081,9 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].updatePlayerIndex();
             if (!testBoom.getActive()) {
                 testBoom.setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-                testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), M_RADIUS-0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+                testBoom.pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
             }
-            
+
 
             break;
 
@@ -978,7 +1092,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         case VK_DOWN:
             player[1].setPower(0, -playerTwoSp);
-           
+
             break;
         case VK_LEFT:
             player[1].setPower(-playerTwoSp, 0);
@@ -989,17 +1103,17 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         default:
             break;
         }
-        
+
         break;
     }
     case WM_KEYUP:
-        
+
         switch (wParam) {
         case 'W':
             if (player[0].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
                 player[0].setPower(0, 0);
             }
-            
+
             break;
         case 'A':
             if (player[0].getVelocity_Z() == 0) {
@@ -1043,15 +1157,15 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         default:
             break;
-        
+
         }
-        break; 
+        break;
     default:
-     
+
         break;
 
     }
-    
+
 
     //player.setPower(xpower, ypower);  // 현재 속도 설정
 
@@ -1086,3 +1200,4 @@ int WINAPI WinMain(HINSTANCE hinstance,
 
     return 0;
 }
+
