@@ -14,34 +14,35 @@ C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(152,26): warning C4305: '=': 'doub
 C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(168,64): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(168,89): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(266,42): warning C4305: 'return': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(352,63): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(352,40): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(354,77): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(354,48): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(355,77): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(355,48): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(356,73): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(356,48): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(357,73): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(357,48): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(469,34): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(480,27): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(483,26): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(486,27): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(489,26): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(501,68): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(511,68): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(521,67): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(531,67): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(692,58): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(694,62): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(700,62): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(702,58): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(713,52): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(716,66): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(679,9): warning C4101: 'i' :참조되지 않은 지역 변수입니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(911,1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(923,93): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(923,83): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(923,40): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(375,63): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(375,40): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(378,81): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(378,50): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(381,81): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(381,50): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(384,75): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(384,50): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(387,75): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(387,50): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(475,9): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(512,34): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(523,27): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(526,26): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(529,27): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(532,26): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(544,68): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(554,68): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(564,67): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(574,67): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(735,58): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(737,62): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(743,62): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(745,58): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(756,52): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(759,66): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(722,9): warning C4101: 'i' :참조되지 않은 지역 변수입니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(909,1): warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. 데이터가 손실되지 않게 하려면 해당 파일을 유니코드 형식으로 저장하십시오.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(970,93): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(970,83): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
+C:\SIYOON\CAU\OOP\OOP_PJ4\git\virtualLego.cpp(970,40): warning C4244: '인수': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   VirtualLego.vcxproj -> C:\SIYOON\CAU\OOP\OOP_PJ4\git\Debug\VirtualLego.exe
