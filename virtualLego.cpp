@@ -67,6 +67,7 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
+//일단 폭탄은 2로 설정
 
 
 // -----------------------------------------------------------------------------
@@ -333,6 +334,7 @@ public:
             this -> b_isActive = true;
             setCenter(sx, py, sz);
             this -> b_time = 0;
+            map[b_indexZ][b_indexX] = 2;
         }
     }
     //키 눌렀을 때
@@ -344,7 +346,7 @@ public:
 
         b_time += timeDelta;
         if (b_time >= b_setTime) {
-
+            map[b_indexZ][b_indexX] = 0;
             b_isActive = false;
 
             explosion[0].activate(-4.2 + 0.6*b_indexX, 0, 4.2 - 0.6*b_indexZ); // 폭탄 위치
@@ -916,9 +918,11 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case 'F':
             player[0].updatePlayerIndex();
-
-            testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), player[0].getCenter().y - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
-            testBoom.setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+            if (!testBoom.getActive()) {
+                testBoom.setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+                testBoom.pressKey(-4.2 + 0.6*player[0].getPlayerIndexX(), M_RADIUS-0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+            }
+            
 
             break;
 
