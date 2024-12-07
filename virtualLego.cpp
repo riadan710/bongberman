@@ -390,32 +390,54 @@ public:
             explosion[0].activate(-4.2 + 0.6*b_indexX, 0, 4.2 - 0.6*b_indexZ); // 폭탄 위치
             explosion[0].setIndex(b_indexX, b_indexZ);
             for (int i = 0; i < b_range; i++) {
-                explosion[1 + i*4].activate(-4.2 + 0.6 * (b_indexX+i+1), 0, 4.2 - 0.6 * b_indexZ); // X +
-                explosion[1 + i*4].setIndex(b_indexX + i+1, b_indexZ);
+                if (b_indexX + i + 1 < 15) {
+                    explosion[1 + i*4].activate(-4.2 + 0.6 * (b_indexX+i+1), 0, 4.2 - 0.6 * b_indexZ); // X +
+                    explosion[1 + i*4].setIndex(b_indexX + i+1, b_indexZ);
+                }
+                if (b_indexX - i - 1 > -1) {
+                    explosion[2 + i * 4].activate(-4.2 + 0.6 * (b_indexX - i - 1), 0, 4.2 - 0.6 * b_indexZ); // X -
+                    explosion[2 + i * 4].setIndex(b_indexX - i - 1, b_indexZ);
+                }
 
-                explosion[2 + i*4].activate(-4.2 + 0.6 * (b_indexX-i-1), 0, 4.2 - 0.6 * b_indexZ); // X -
-                explosion[2 + i*4].setIndex(b_indexX - i-1, b_indexZ);
+                if (b_indexZ + i + 1 < 15) {
+                    explosion[3 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ + i + 1)); // Z +
+                    explosion[3 + i * 4].setIndex(b_indexX, b_indexZ + i + 1);
+                }
 
-                explosion[3 + i*4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ+i+1)); // Z +
-                explosion[3 + i*4].setIndex(b_indexX, b_indexZ + i+1);
-
-                explosion[4 + i*4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ-i-1)); // Z -
-                explosion[4 + i*4].setIndex(b_indexX, b_indexZ - i-1);
+                if (b_indexZ - i - 1 > -1) {
+                    explosion[4 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ - i - 1)); // Z -
+                    explosion[4 + i * 4].setIndex(b_indexX, b_indexZ - i - 1);
+                }
             }
         }
     }
 
-    bool updateExplosions(float timeDelta, int x, int y) {
+    void updateExplosions(float timeDelta) {
         for (int i = 0; i < 9; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
+    }
+
+    bool checkExplosion2(int x, int y) {
         if (!player1) {
             for (int i = 0; i < 9; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player1 = true;
+                    return true;
                 }
             }
-            return player1;
+        }
+        return false;
+    }
+
+    bool checkExplosion1(int x, int y) {
+        if (!player2) {
+            for (int i = 0; i < 9; i++) {
+                if (explosion[i].checkExp(x, y)) {
+                    player2 = true;
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -716,9 +738,9 @@ int ss_y = 14;
 int ss_x = 12;
 int validCount = 0;
 
-
-CBoom testBoom;
-
+CONST int MAX_BOOM = 5;
+CBoom b_player1[MAX_BOOM];
+CBoom b_player2[MAX_BOOM];
 
 ID3DXFont* g_pFont = NULL; //폰트1 변수
 ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
@@ -793,9 +815,14 @@ bool Setup()
     playerBody[0].setPosition(0.0f, 0.3f, 0.0f);
 
 
-    //test용 boom
-    if (false == testBoom.create(Device, d3d::BLACK)) return false;
-    if (false == testBoom.createExplosion(Device))return false;
+    //boom 생성
+    for (int i = 0; i < MAX_BOOM; i++) {
+        if (false == b_player1[i].create(Device, d3d::BLACK)) return false;
+        if (false == b_player1[i].createExplosion(Device))return false;
+
+        if (false == b_player2[i].create(Device, d3d::GREEN)) return false;
+        if (false == b_player2[i].createExplosion(Device))return false;
+    }
 
 
     //플레이어 2 생성 
@@ -956,16 +983,46 @@ bool Display(float timeDelta)
             playerBody[1].draw(Device, g_mWorld);
             player[1].bindingPlayerBody(playerBody[1]);
 
-            if (testBoom.getActive()) {
-                testBoom.draw(Device, g_mWorld);
+            //1 player's boom
+            for (int i = 0; i < MAX_BOOM; i++) {
+                if (b_player1[i].getActive()) {
+                    b_player1[i].draw(Device, g_mWorld);
+                }
+                b_player1[i].boomUpdate(timeDelta);
+                b_player1[i].drawExplosions(Device, g_mWorld);
+
+
+                player[0].updatePlayerIndex();
+                player[1].updatePlayerIndex();
+
+                b_player1[i].updateExplosions(timeDelta);
+                if (b_player1[i].checkExplosion1(player[0].getPlayerIndexX(), player[0].getPlayerIndexY())) {
+                    player[0].setPlayerLife();
+                }
+                if (b_player1[i].checkExplosion2(player[1].getPlayerIndexX(), player[1].getPlayerIndexY())) {
+                    player[1].setPlayerLife();
+                }
+
+                //2 player's boom
+                if (b_player2[i].getActive()) {
+                    b_player2[i].draw(Device, g_mWorld);
+                }
+                b_player2[i].boomUpdate(timeDelta);
+                b_player2[i].drawExplosions(Device, g_mWorld);
+
+
+                player[0].updatePlayerIndex();
+                player[1].updatePlayerIndex();
+
+                b_player2[i].updateExplosions(timeDelta);
+                if (b_player2[i].checkExplosion1(player[0].getPlayerIndexX(), player[0].getPlayerIndexY())) {
+                    player[0].setPlayerLife();
+                }
+                if (b_player2[i].checkExplosion2(player[1].getPlayerIndexX(), player[1].getPlayerIndexY())) {
+                    player[1].setPlayerLife();
+                }
             }
-            testBoom.boomUpdate(timeDelta);
-            testBoom.drawExplosions(Device, g_mWorld);
-            player[0].updatePlayerIndex();
-            bool p1 = testBoom.updateExplosions(timeDelta, player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-            if (p1) {
-                player[0].setPlayerLife();
-            }
+
 
             // 플레이어 라이프 표시
             if (g_pFontLarge) {
@@ -1005,14 +1062,14 @@ bool Display(float timeDelta)
         }
         }
 
-        testBoom.boomUpdate(timeDelta);
-        //boom의 active 값이 true인 경우에만 보이도록 설정
-        testBoom.drawExplosions(Device, g_mWorld);
-        player[0].updatePlayerIndex();
-        bool p1 = testBoom.updateExplosions(timeDelta,player[0].getPlayerIndexX(),player[0].getPlayerIndexY());
-        if (p1) {
-            player[0].setPlayerLife();
-        }
+        //b_player1.boomUpdate(timeDelta);
+        ////boom의 active 값이 true인 경우에만 보이도록 설정
+        //b_player1.drawExplosions(Device, g_mWorld);
+        //player[0].updatePlayerIndex();
+        //bool p1 = b_player1.updateExplosions(timeDelta,player[0].getPlayerIndexX(),player[0].getPlayerIndexY());
+        //if (p1) {
+        //    player[0].setPlayerLife();
+        //}
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
@@ -1083,12 +1140,13 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case 'F':
             player[0].updatePlayerIndex();
-            if (!testBoom.getActive()) {
-                testBoom.setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-                testBoom.pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+            for (int i = 0; i < player[0].getBombCap(); i++) {
+                if (!b_player1[i].getActive()) {
+                    b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+                    b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+                    break;
+                }
             }
-
-
             break;
 
         case VK_UP:
@@ -1103,6 +1161,16 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         case VK_RIGHT:
             player[1].setPower(playerTwoSp, 0);
+            break;
+        case 'L':
+            player[1].updatePlayerIndex();
+            for (int i = 0; i < player[1].getBombCap(); i++) {
+                if (!b_player2[i].getActive()) {
+                    b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
+                    b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
+                    break;
+                }
+            }
             break;
         default:
             break;
