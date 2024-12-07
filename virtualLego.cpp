@@ -283,6 +283,9 @@ private:
     //생성 후 지난 시간
     float e_setTime = 1;
     //지속시간 세팅
+
+    int e_indexX;
+    int e_indexZ;
     
 public:
 
@@ -301,8 +304,23 @@ public:
         }
     }
 
+    bool checkExp(int x, int y) {
+        if (e_isActive) {
+            if (e_indexX == x && e_indexZ == y) {
+                 return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
     bool getActive() {
         return e_isActive;
+    }
+
+    void setIndex(int x, int z) {
+        this->e_indexX = x;
+        this->e_indexZ = z;
     }
 };
 
@@ -315,9 +333,12 @@ private:
     const int b_max = 10;
     int b_indexX =0;
     int b_indexZ =0;
-    int b_range = 1;
-    CExplosion explosion[5];
-    int numOfExp = 5;
+    int b_range = 2;
+    CExplosion explosion[9];
+    int numOfExp = 9;
+
+    bool player1 = false;
+    bool player2 = false;
 
 public:
     bool createExplosion(IDirect3DDevice9* pDevice) {
@@ -331,6 +352,8 @@ public:
 
     void pressKey(float sx, float py, float sz) {
         if (!b_isActive) {
+            player1 = false;
+            player2 = false;
             this -> b_isActive = true;
             setCenter(sx, py, sz);
             this -> b_time = 0;
@@ -350,23 +373,40 @@ public:
             b_isActive = false;
 
             explosion[0].activate(-4.2 + 0.6*b_indexX, 0, 4.2 - 0.6*b_indexZ); // 폭탄 위치
+            explosion[0].setIndex(b_indexX, b_indexZ);
             for (int i = 0; i < b_range; i++) {
-                explosion[1 + i].activate(-4.2 + 0.6 * (b_indexX+1), 0, 4.2 - 0.6 * b_indexZ); // X +
-                explosion[2 + i].activate(-4.2 + 0.6 * (b_indexX-1), 0, 4.2 - 0.6 * b_indexZ); // X -
-                explosion[3 + i].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ+1)); // Z +
-                explosion[4 + i].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ-1)); // Z -
+                explosion[1 + i*4].activate(-4.2 + 0.6 * (b_indexX+i+1), 0, 4.2 - 0.6 * b_indexZ); // X +
+                explosion[1 + i*4].setIndex(b_indexX + i+1, b_indexZ);
+
+                explosion[2 + i*4].activate(-4.2 + 0.6 * (b_indexX-i-1), 0, 4.2 - 0.6 * b_indexZ); // X -
+                explosion[2 + i*4].setIndex(b_indexX - i-1, b_indexZ);
+
+                explosion[3 + i*4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ+i+1)); // Z +
+                explosion[3 + i*4].setIndex(b_indexX, b_indexZ + i+1);
+
+                explosion[4 + i*4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ-i-1)); // Z -
+                explosion[4 + i*4].setIndex(b_indexX, b_indexZ - i-1);
             }
         }
     }
 
-    void updateExplosions(float timeDelta) {
-        for (int i = 0; i < 5; ++i) {
+    bool updateExplosions(float timeDelta, int x, int y) {
+        for (int i = 0; i < 9; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
+        if (!player1) {
+            for (int i = 0; i < 9; i++) {
+                if (explosion[i].checkExp(x, y)) {
+                    player1 = true;
+                }
+            }
+            return player1;
+        }
+        return false;
     }
 
     void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < 9; ++i) {
             if (explosion[i].getActive()) {
                 explosion[i].draw(pDevice, mWorld);
             }
@@ -410,7 +450,7 @@ public:
         this->playerIndexY = (int)((4.5f - this->center_z) / 0.6f);
 
         string message = "x: " + to_string(this->playerIndexX) + " y: " + to_string(this->playerIndexY);
-        OutputDebugString((message + "\n").c_str());
+        //OutputDebugString((message + "\n").c_str());
     }
 
     
@@ -431,6 +471,9 @@ public:
 
     void setPlayerLife() {
         this->playerLife -= 1;
+        char buffer[100];
+        sprintf(buffer, "Player Life: %d\n", this->playerLife);
+        OutputDebugString(buffer);
         if (this->playerLife > 0) { // 목숨은 음수가 될 수 없음
             
         }
@@ -854,7 +897,11 @@ bool Display(float timeDelta)
         testBoom.boomUpdate(timeDelta);
         //boom의 active 값이 true인 경우에만 보이도록 설정
         testBoom.drawExplosions(Device, g_mWorld);
-        testBoom.updateExplosions(timeDelta);
+        player[0].updatePlayerIndex();
+        bool p1 = testBoom.updateExplosions(timeDelta,player[0].getPlayerIndexX(),player[0].getPlayerIndexY());
+        if (p1) {
+            player[0].setPlayerLife();
+        }
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
