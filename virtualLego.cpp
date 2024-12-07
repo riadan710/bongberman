@@ -709,7 +709,6 @@ bool Setup()
 
         if (false == boundaryLineByX[i].create(Device, -1, -1, 0.05f, 0.01f, 9, d3d::BLACK)) return false;
         boundaryLineByX[i].setPosition(-4.5f + 0.6 + 0.6*i, 0.015f, 0.0f);
-r
 
         if (false == boundaryLineByY[i].create(Device, -1, -1, 9, 0.05f, 0.01f, d3d::BLACK)) return false;
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
