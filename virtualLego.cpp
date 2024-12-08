@@ -51,6 +51,7 @@ D3DXMATRIX g_mProj;
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
 #define BOX_LENGTH 0.5f  // 상자 길이
+#define BOX_COUNT 30    // 상자 개수
 
 //맵 배치에 사용
 int map[15][15] = {
@@ -917,10 +918,7 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
 // 아이템 상자
 ItemBox itembox;
-
 ItemBox* itemMap[15][15] = { nullptr };
-
-int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 //아이템 벡터 선언
 vector<CItem> itemList;
@@ -944,7 +942,7 @@ bool itemMake(int itemType, float pos_x, float pos_z) {
         itemColor = d3d::YELLOW;
         break;
     case 3:
-        itemColor = d3d::WHITE;
+        itemColor = d3d::BLUE;
         break;
     }
     if (false == item.create(Device, itemColor)) return false;
@@ -1002,14 +1000,23 @@ void setRandomItemBox() {
     float intervalZ = 0.5786f;  // Z 간격
 
     // 랜덤 (i, j) 좌표 생성
-    int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
-    int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+    int randomI, randomJ;
+    do {
+        randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
+        randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+
+        // 이미 해당 위치에 아이템 상자가 있으면 다시 생성
+    } while (map[randomJ][randomI] == 1 ||
+        (randomI == 0 && (randomJ == 14 || randomJ == 13)) ||
+        (randomI == 1 && (randomJ == 14 || randomJ == 13)) ||
+        (randomI == 14 && (randomJ == 14 || randomJ == 13)) ||
+        (randomI == 13 && (randomJ == 14 || randomJ == 13)));
 
     // (randomI, randomJ)에 해당하는 정확한 좌표 계산
     float randomX = startX + randomI * intervalX;  // X 좌표
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
-    itembox->create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox->create(Device, D3DXCOLOR(d3d::WHITE));  // 초록 상자
     itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
@@ -1065,13 +1072,13 @@ bool Setup()
     }
 
     // 아이템 상자 랜덤 배치
-    for (int i = 0; i < itemBox_num; i++) {
+    for (int i = 0; i < BOX_COUNT; i++) {
         setRandomItemBox();
     }
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
-    player[0].setCenter(.0f, (float)P_RADIUS + 0.5f, -3.5f);
+    player[0].setCenter(-4.1f, (float)P_RADIUS + 0.5f, -4.3f);  // 왼쪽 맨 아래 
     player[0].setPower(0, 0);
 
     if (false == playerBody[0].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::RED)) return false;
@@ -1090,7 +1097,7 @@ bool Setup()
 
     //플레이어 2 생성 
     if (false == player[1].create(Device, d3d::BLUE)) return false;
-    player[1].setCenter(4.5f, (float)P_RADIUS + 0.5f, -3.5f);
+    player[1].setCenter(4.1f, (float)P_RADIUS + 0.5f, -4.3f);   // 오른쪽 맨 아래
     player[1].setPower(0, 0);
     if (false == playerBody[1].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::BLUE)) return false;
     playerBody[1].setPosition(0.0f, 0.3f, 0.0f);
