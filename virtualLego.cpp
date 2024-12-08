@@ -343,14 +343,15 @@ private:
     float b_time;
     bool b_isActive = false;
     float b_setTime = 2;
-    int b_numOfBoom = 1;
+    //int b_numOfBoom = 5;
     const int b_max = 10;
 
     int b_indexX =0;
     int b_indexZ =0;
-    int b_range = 2;
-    CExplosion explosion[9];
-    int numOfExp = 9;
+    int b_range = 0;
+    int numOfExp = 17;
+    CExplosion explosion[17];
+    
 
     bool player1 = false;
     bool player2 = false;
@@ -414,14 +415,14 @@ public:
     }
 
     void updateExplosions(float timeDelta) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range*4+1; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
     }
 
     bool checkExplosion2(int x, int y) {
         if (!player1) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player1 = true;
                     return true;
@@ -433,7 +434,7 @@ public:
 
     bool checkExplosion1(int x, int y) {
         if (!player2) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player2 = true;
                     return true;
@@ -444,7 +445,7 @@ public:
     }
 
     void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range * 4 + 1; ++i) {
             if (explosion[i].getActive()) {
                 explosion[i].draw(pDevice, mWorld);
             }
@@ -457,19 +458,23 @@ public:
     }
 
     //아이템 먹고 폭탄 개수 늘려주기
-    void setNumOfBoom(int numOfBoom) {
-        if (numOfBoom <= b_max) {
-            b_numOfBoom = numOfBoom;
-        }
-    }
+    //void setNumOfBoom(int numOfBoom) {
+    //    if (numOfBoom <= b_max) {
+    //        b_numOfBoom = numOfBoom;
+    //    }
+    //}
 
-    int getNumOfBoom() {
-        return b_numOfBoom;
-    }
+    //int getNumOfBoom() {
+    //    return b_numOfBoom;
+    //}
 
     void setIndexXY(int indexX, int indexY) {
         this->b_indexX = indexX;
         this->b_indexZ = indexY;
+    }
+
+    void setBoomRange(int x) {
+        b_range = x;
     }
 };
 
@@ -477,7 +482,7 @@ class Player : public CSphere { //플레이어 저장하는 클래스
 private:
     int playerLife = 3;//플레이어 목숨
     int bombRange = 1;//폭탄 범위
-    int bombCap = 1;//폭탄용량
+    int bombCap = 3;//폭탄용량
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
     int playerIndexX;
     int playerIndexY;
@@ -1328,12 +1333,18 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].updatePlayerIndex();
             for (int i = 0; i < player[0].getBombCap(); i++) {
                 if (!b_player1[i].getActive()) {
-                    b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-                    b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
-                    break;
+                    if (map[player[0].getPlayerIndexY()][player[0].getPlayerIndexX()] != 2) {
+                        //같은 위치에 여러번 설치 방지
+                        b_player1[i].setBoomRange(player[0].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
+                        b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+                        b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+                        break;
+                    }
                 }
             }
             break;
+
 
         case VK_UP:
             player[1].setPower(0, playerTwoSp);
@@ -1346,15 +1357,20 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[1].setPower(-playerTwoSp, 0);
             break;
         case VK_RIGHT:
-            player[1].setPower(playerTwoSp, 0);
+            player[1].setPower(playerTwoSp, 0); 
             break;
         case 'L':
             player[1].updatePlayerIndex();
             for (int i = 0; i < player[1].getBombCap(); i++) {
                 if (!b_player2[i].getActive()) {
-                    b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
-                    b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
-                    break;
+                    if (map[player[1].getPlayerIndexY()][player[1].getPlayerIndexX()] != 2) {
+                        //같은 위치에 여러번 설치 방지
+                        b_player2[i].setBoomRange(player[1].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
+                        b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
+                        b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
+                        break;
+                    }
                 }
             }
             break;
