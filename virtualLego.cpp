@@ -51,6 +51,7 @@ D3DXMATRIX g_mProj;
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
 #define BOX_LENGTH 0.5f  // 상자 길이
+#define BOX_COUNT 30    // 상자 개수
 
 //맵 배치에 사용
 int map[15][15] = {
@@ -353,8 +354,8 @@ private:
     int b_indexX = 0;
     int b_indexZ = 0;
     int b_range = 2;
-    CExplosion explosion[9];
-    int numOfExp = 9;
+    CExplosion explosion[41];
+    int numOfExp = 41;
 
     bool player1 = false;
     bool player2 = false;
@@ -443,14 +444,14 @@ public:
     }
 
     void updateExplosions(float timeDelta) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range * 4 + 1; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
     }
 
     bool checkExplosion2(int x, int y) {
         if (!player1) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player1 = true;
                     return true;
@@ -462,7 +463,7 @@ public:
 
     bool checkExplosion1(int x, int y) {
         if (!player2) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player2 = true;
                     return true;
@@ -473,7 +474,7 @@ public:
     }
 
     void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range * 4 + 1; ++i) {
             if (explosion[i].getActive()) {
                 explosion[i].draw(pDevice, mWorld);
             }
@@ -499,6 +500,10 @@ public:
     void setIndexXY(int indexX, int indexY) {
         this->b_indexX = indexX;
         this->b_indexZ = indexY;
+    }
+
+    void setBoomRange(int x) {
+        b_range = x;
     }
 };
 
@@ -559,7 +564,7 @@ public:
         this->bombRange += 1;
     }
 
-    
+
     int getBombCap() {
         return this->bombCap;
     }
@@ -791,6 +796,7 @@ public:
         default:
             break;
         }
+
         return true;
     }
     void ballAnimation(float deltaTime) {
@@ -924,7 +930,7 @@ int ss_y = 14;
 int ss_x = 12;
 int validCount = 0;
 
-CONST int MAX_BOOM = 5;
+CONST int MAX_BOOM = 20;
 CBoom b_player1[MAX_BOOM];
 CBoom b_player2[MAX_BOOM];
 
@@ -933,10 +939,7 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
 // 아이템 상자
 ItemBox itembox;
-
 ItemBox* itemMap[15][15] = { nullptr };
-
-int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 //아이템 벡터 선언
 vector<CItem> itemList;
@@ -950,7 +953,7 @@ vector<CItem> itemList;
 bool itemMake(int itemType, float pos_x, float pos_z) {
     CItem item;
     D3DXCOLOR itemColor;
-    
+
     switch (itemType + 1)//플레이어한테 능력치 부여
     {
     case 1:
@@ -960,7 +963,7 @@ bool itemMake(int itemType, float pos_x, float pos_z) {
         itemColor = d3d::YELLOW;
         break;
     case 3:
-        itemColor = d3d::WHITE;
+        itemColor = d3d::BLUE;
         break;
     }
     if (false == item.create(Device, itemColor)) return false;
@@ -981,10 +984,12 @@ void destroyItemBoxAt(int x, int z) {
     }
 
     if (itemMap[z][x] != nullptr) {
-        int randomItem = rand() % 7;
+
+        int randomItem = rand() % 8;
         
         if (randomItem >= 3) {
             
+
         }
         else {
             itemMake(randomItem, -4.2 + 0.6 * x, 4.2 - 0.6 * z);
@@ -1018,14 +1023,23 @@ void setRandomItemBox() {
     float intervalZ = 0.5786f;  // Z 간격
 
     // 랜덤 (i, j) 좌표 생성
-    int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
-    int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+    int randomI, randomJ;
+    do {
+        randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
+        randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+
+        // 이미 해당 위치에 아이템 상자가 있으면 다시 생성
+    } while (map[randomJ][randomI] == 1 ||
+        (randomI == 0 && (randomJ == 14 || randomJ == 13)) ||
+        (randomI == 1 && (randomJ == 14 || randomJ == 13)) ||
+        (randomI == 14 && (randomJ == 14 || randomJ == 13)) ||
+        (randomI == 13 && (randomJ == 14 || randomJ == 13)));
 
     // (randomI, randomJ)에 해당하는 정확한 좌표 계산
     float randomX = startX + randomI * intervalX;  // X 좌표
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
-    itembox->create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox->create(Device, D3DXCOLOR(d3d::WHITE));  // 하얀 상자
     itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
@@ -1040,7 +1054,7 @@ void setRandomItemBox() {
 bool Setup()
 {
 
-    
+
     int i;
     OutputDebugStringA("This is a test message.\n");
     D3DXMatrixIdentity(&g_mWorld);
@@ -1081,13 +1095,13 @@ bool Setup()
     }
 
     // 아이템 상자 랜덤 배치
-    for (int i = 0; i < itemBox_num; i++) {
+    for (int i = 0; i < BOX_COUNT; i++) {
         setRandomItemBox();
     }
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
-    player[0].setCenter(.0f, (float)P_RADIUS + 0.5f, -3.5f);
+    player[0].setCenter(-4.1f, (float)P_RADIUS + 0.5f, -4.3f);  // 왼쪽 맨 아래 
     player[0].setPower(0, 0);
 
     if (false == playerBody[0].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::RED)) return false;
@@ -1106,7 +1120,7 @@ bool Setup()
 
     //플레이어 2 생성 
     if (false == player[1].create(Device, d3d::BLUE)) return false;
-    player[1].setCenter(4.5f, (float)P_RADIUS + 0.5f, -3.5f);
+    player[1].setCenter(4.1f, (float)P_RADIUS + 0.5f, -4.3f);   // 오른쪽 맨 아래
     player[1].setPower(0, 0);
     if (false == playerBody[1].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::BLUE)) return false;
     playerBody[1].setPosition(0.0f, 0.3f, 0.0f);
@@ -1446,9 +1460,14 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].updatePlayerIndex();
             for (int i = 0; i < player[0].getBombCap(); i++) {
                 if (!b_player1[i].getActive()) {
-                    b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-                    b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
-                    break;
+                    if (map[player[0].getPlayerIndexY()][player[0].getPlayerIndexX()] != 2) {
+                        //같은 위치에 여러번 설치 방지
+                        b_player1[i].setBoomRange(player[0].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
+                        b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+                        b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+                        break;
+                    }
                 }
             }
             break;
@@ -1470,9 +1489,14 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[1].updatePlayerIndex();
             for (int i = 0; i < player[1].getBombCap(); i++) {
                 if (!b_player2[i].getActive()) {
-                    b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
-                    b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
-                    break;
+                    if (map[player[1].getPlayerIndexY()][player[1].getPlayerIndexX()] != 2) {
+                        //같은 위치에 여러번 설치 방지
+                        b_player2[i].setBoomRange(player[1].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
+                        b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
+                        b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
+                        break;
+                    }
                 }
             }
             break;
