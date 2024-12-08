@@ -363,9 +363,9 @@ private:
 
 public:
     //Explosion 생성
-    bool createExplosion(IDirect3DDevice9* pDevice) {
+    bool createExplosion(IDirect3DDevice9* pDevice, D3DXCOLOR color) {
         for (int i = 0; i < numOfExp; i++) {
-            if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, d3d::RED)) return false;
+            if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, color)) return false;
         }
         return true;
     }
@@ -1110,11 +1110,11 @@ bool Setup()
 
     //boom 생성
     for (int i = 0; i < MAX_BOOM; i++) {
-        if (false == b_player1[i].create(Device, d3d::BLACK)) return false;
-        if (false == b_player1[i].createExplosion(Device))return false;
+        if (false == b_player1[i].create(Device, d3d::RED)) return false;
+        if (false == b_player1[i].createExplosion(Device, d3d::RED))return false;
 
-        if (false == b_player2[i].create(Device, d3d::GREEN)) return false;
-        if (false == b_player2[i].createExplosion(Device))return false;
+        if (false == b_player2[i].create(Device, d3d::BLUE)) return false;
+        if (false == b_player2[i].createExplosion(Device, d3d::BLUE))return false;
     }
 
 
@@ -1322,8 +1322,9 @@ bool Display(float timeDelta)
             }
 
 
-            // 플레이어 라이프 표시
+            // UI 표시
             if (g_pFontLarge) {
+                // 플레이어 라이프 표시
                 RECT lifeRect;
                 SetRect(&lifeRect, 10, 10, 0, 0); // 왼쪽 상단 근처
                 char lifeText[128];
@@ -1335,6 +1336,29 @@ bool Display(float timeDelta)
                 sprintf_s(lifeText, "P2 Life: %d", player[1].getPlayerLife());
                 // 플레이어 2 목숨: 파란색
                 g_pFontLarge->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(0, 0, 255));
+
+
+                // 아이템 효과 설명
+                SetRect(&lifeRect, 770, 30, 0, 0); // 아이템 효과 시작 위치
+                sprintf_s(lifeText, "Red  :  Bomb Max Count");
+                g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0)); // 빨간색
+
+                SetRect(&lifeRect, 747, 60, 0, 0); // 아이템 효과 두번째 줄
+                sprintf_s(lifeText, "Yellow  :  Bomb Range");
+                g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 0)); // 노란색
+
+                SetRect(&lifeRect, 765, 90, 0, 0); // 아이템 효과 세번째 줄
+                sprintf_s(lifeText, "Blue  :  Speed");
+                g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(0, 0, 255)); // 파란색
+
+                // 플레이어 조작 설명
+                SetRect(&lifeRect, 300, 40, 0, 0); // 조작 설명 시작 위치
+                sprintf_s(lifeText, "P1 : WASD to move, F to Bomb");
+                g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0)); // 흰색
+
+                SetRect(&lifeRect, 300, 80, 0, 0); // P2 조작 설명
+                sprintf_s(lifeText, "P2 : Arrow keys to move, L to place Bomb");
+                g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(0, 0, 255)); // 흰색
             }
 
             // 플레이어 목숨 검사 후 STATE_GAMEOVER 전환 로직
