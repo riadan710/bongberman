@@ -289,6 +289,103 @@ private:
     ID3DXMesh* m_pBoundMesh;
 };
 
+
+class ItemBox {
+private:
+    float m_length;  // 정육면체 한 변의 길이
+    D3DXMATRIX m_mLocal;  // 로컬 변환 행렬
+    D3DMATERIAL9 m_mtrl;   // 재질 정보
+    ID3DXMesh* m_pBoxMesh; // 정육면체 메쉬 포인터
+
+    int m_indexX, m_indexZ;  // 해당 상자의 X, Z 좌표
+public:
+    // 생성자
+    ItemBox() : m_length(BOX_LENGTH), m_pBoxMesh(nullptr) {
+        ZeroMemory(&m_mtrl, sizeof(m_mtrl));
+        D3DXMatrixIdentity(&m_mLocal); // 로컬 변환 행렬 초기화
+    }
+
+    // 정육면체 생성
+    bool create(IDirect3DDevice9* pDevice, D3DXCOLOR color = D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)) {
+        if (pDevice == nullptr) return false;
+
+        // 정육면체 재질 설정
+        m_mtrl.Ambient = color;
+        m_mtrl.Diffuse = color;
+        m_mtrl.Specular = color;
+        m_mtrl.Emissive = D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f);
+        m_mtrl.Power = 5.0f;
+
+        // 정육면체 메쉬 생성
+        if (FAILED(D3DXCreateBox(pDevice, m_length, m_length, m_length, &m_pBoxMesh, nullptr))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // 정육면체 그리기
+    void draw(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
+        if (pDevice == nullptr || m_pBoxMesh == nullptr) return;
+
+        pDevice->SetTransform(D3DTS_WORLD, &mWorld);  // 월드 변환 설정
+        pDevice->MultiplyTransform(D3DTS_WORLD, &m_mLocal);  // 로컬 변환 적용
+        pDevice->SetMaterial(&m_mtrl);  // 재질 설정
+        m_pBoxMesh->DrawSubset(0);  // 메쉬 그리기
+    }
+
+    // 위치 설정
+    void setPosition(float x, float y, float z) {
+        D3DXMATRIX m;
+        D3DXMatrixTranslation(&m, x, y, z);  // 주어진 위치로 이동
+        m_mLocal = m;  // 로컬 변환 행렬 설정
+    }
+
+    // 위치 및 변환 관련 메서드
+    const D3DXMATRIX& getLocalTransform() const {
+        return m_mLocal;
+    }
+
+    // 정육면체의 한 변의 길이 반환
+    float getLength() const {
+        return m_length;
+    }
+
+    // 정육면체 메쉬 삭제
+    void destroy() {
+        if (m_pBoxMesh) {
+            m_pBoxMesh->Release();
+            m_pBoxMesh = nullptr;
+        }
+
+        // 해당 좌표의 map 값을 0으로 설정
+        if (m_indexX >= 0 && m_indexZ >= 0) {
+            map[m_indexZ][m_indexX] = 0;  // 좌표 위치에서 map 값 제거
+        }
+    }
+
+    void setIndex(float x, float z) {
+        m_indexX = x;
+        m_indexZ = z;
+    }
+
+    int getIndexX() {
+        return m_indexX;
+    }
+    int getIndexZ() {
+        return m_indexZ;
+    }
+};
+
+
+// 아이템 상자
+vector<ItemBox> itemBoxes;
+ItemBox itembox;
+int itemBox_num = 20;   // 전체 아이템 상자 개수
+//boom에서 사용하기 위해 위치 변경
+
+
+
 class CExplosion : public CWall {
 private:
     bool e_isActive = false;
@@ -337,6 +434,10 @@ public:
         this->e_indexZ = z;
     }
 };
+
+
+
+
 
 class CBoom : public CSphere {
 private:
@@ -393,20 +494,60 @@ public:
             explosion[0].setIndex(b_indexX, b_indexZ);
             for (int i = 0; i < b_range; i++) {
                 if (b_indexX + i + 1 < 15) {
-                    explosion[1 + i*4].activate(-4.2 + 0.6 * (b_indexX+i+1), 0, 4.2 - 0.6 * b_indexZ); // X +
-                    explosion[1 + i*4].setIndex(b_indexX + i+1, b_indexZ);
+                    if (map[b_indexZ][b_indexX + i + 1]==1) {
+                        for (int j = 0; j < itemBox_num; j++) {
+                            if (itemBoxes[j].getIndexX() == b_indexX + i + 1 && itemBoxes[j].getIndexZ() == b_indexZ) {
+                                OutputDebugString("boom1");
+                                itemBoxes[j].destroy();
+                            } 
+                        }
+                        break;
+                    }
+                    explosion[1 + i * 4].activate(-4.2 + 0.6 * (b_indexX + i + 1), 0, 4.2 - 0.6 * b_indexZ); // X +
+                    explosion[1 + i * 4].setIndex(b_indexX + i + 1, b_indexZ);
                 }
+            }
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexX - i - 1 > -1) {
+                    if (map[b_indexZ][b_indexX - i - 1]==1) {
+                        for (int j = 0; j < itemBox_num; j++) {
+                            if (itemBoxes[j].getIndexX() == b_indexX - i - 1 && itemBoxes[j].getIndexZ() == b_indexZ) {
+                                OutputDebugString("boom2");
+                                itemBoxes[j].destroy();
+                            }
+                        }
+                        break;
+                    }
                     explosion[2 + i * 4].activate(-4.2 + 0.6 * (b_indexX - i - 1), 0, 4.2 - 0.6 * b_indexZ); // X -
                     explosion[2 + i * 4].setIndex(b_indexX - i - 1, b_indexZ);
                 }
-
+            }
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexZ + i + 1 < 15) {
+                    if (map[b_indexZ+i+1][b_indexX]==1) {
+                        for (int j = 0; j < itemBox_num; j++) {
+                            if (itemBoxes[j].getIndexX() == b_indexX && itemBoxes[j].getIndexZ() == b_indexZ + i + 1) {
+                                OutputDebugString("boom3");
+                                itemBoxes[j].destroy();
+                            }
+                        }
+                        break;
+                    }
                     explosion[3 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ + i + 1)); // Z +
                     explosion[3 + i * 4].setIndex(b_indexX, b_indexZ + i + 1);
                 }
-
+            }
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexZ - i - 1 > -1) {
+                    if (map[b_indexZ-i-1][b_indexX]==1) {
+                        for (int j = 0; j < itemBox_num; j++) {
+                            if (itemBoxes[j].getIndexX() == b_indexX && itemBoxes[j].getIndexZ() == b_indexZ-i-1) {
+                                OutputDebugString("boom4");
+                                itemBoxes[j].destroy();
+                            }
+                        }
+                        break;
+                    }
                     explosion[4 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ - i - 1)); // Z -
                     explosion[4 + i * 4].setIndex(b_indexX, b_indexZ - i - 1);
                 }
@@ -481,7 +622,7 @@ public:
 class Player : public CSphere { //플레이어 저장하는 클래스
 private:
     int playerLife = 3;//플레이어 목숨
-    int bombRange = 1;//폭탄 범위
+    int bombRange = 2;//폭탄 범위
     int bombCap = 3;//폭탄용량
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
     int playerIndexX;
