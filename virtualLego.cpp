@@ -343,14 +343,15 @@ private:
     float b_time;
     bool b_isActive = false;
     float b_setTime = 2;
-    int b_numOfBoom = 1;
+    //int b_numOfBoom = 5;
     const int b_max = 10;
 
     int b_indexX =0;
     int b_indexZ =0;
-    int b_range = 2;
-    CExplosion explosion[9];
-    int numOfExp = 9;
+    int b_range = 0;
+    int numOfExp = 17;
+    CExplosion explosion[17];
+    
 
     bool player1 = false;
     bool player2 = false;
@@ -414,14 +415,14 @@ public:
     }
 
     void updateExplosions(float timeDelta) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range*4+1; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
     }
 
     bool checkExplosion2(int x, int y) {
         if (!player1) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player1 = true;
                     return true;
@@ -433,7 +434,7 @@ public:
 
     bool checkExplosion1(int x, int y) {
         if (!player2) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player2 = true;
                     return true;
@@ -444,7 +445,7 @@ public:
     }
 
     void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range * 4 + 1; ++i) {
             if (explosion[i].getActive()) {
                 explosion[i].draw(pDevice, mWorld);
             }
@@ -457,19 +458,23 @@ public:
     }
 
     //아이템 먹고 폭탄 개수 늘려주기
-    void setNumOfBoom(int numOfBoom) {
-        if (numOfBoom <= b_max) {
-            b_numOfBoom = numOfBoom;
-        }
-    }
+    //void setNumOfBoom(int numOfBoom) {
+    //    if (numOfBoom <= b_max) {
+    //        b_numOfBoom = numOfBoom;
+    //    }
+    //}
 
-    int getNumOfBoom() {
-        return b_numOfBoom;
-    }
+    //int getNumOfBoom() {
+    //    return b_numOfBoom;
+    //}
 
     void setIndexXY(int indexX, int indexY) {
         this->b_indexX = indexX;
         this->b_indexZ = indexY;
+    }
+
+    void setBoomRange(int x) {
+        b_range = x;
     }
 };
 
@@ -477,7 +482,7 @@ class Player : public CSphere { //플레이어 저장하는 클래스
 private:
     int playerLife = 3;//플레이어 목숨
     int bombRange = 1;//폭탄 범위
-    int bombCap = 1;//폭탄용량
+    int bombCap = 3;//폭탄용량
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
     int playerIndexX;
     int playerIndexY;
@@ -830,6 +835,10 @@ CBoom b_player2[MAX_BOOM];
 ID3DXFont* g_pFont = NULL; //폰트1 변수
 ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
+// 아이템 상자
+vector<ItemBox> itemBoxes;
+ItemBox itembox;
+int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 
 //게임 초기화 함수들(게임 오버됐을때 다시 시작)
@@ -837,19 +846,19 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 //맵 초기화 
 //초기 맵배열
 const int initialMap[15][15] = {
-    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 //맵을 초기 상태로 재설정
@@ -899,24 +908,44 @@ void resetGame() {
     //resetBombs();
     //resetPlayerPositions();
 
- 
-}
 
-// 아이템 상자
-vector<ItemBox> itemBoxes;
-ItemBox itembox;
-int itemBox_num = 20;   // 전체 아이템 상자 개수
+}
 
 // -----------------------------------------------------------------------------
 // Functions
 // -----------------------------------------------------------------------------
-
 
 void destroyAllLegoBlock(void)
 {
 
 }
 
+void setRandomItemBox() {
+    ItemBox itembox;  // 아이템 상자 객체 생성
+
+    float startX = -4.1f;
+    float startZ = 3.8f;
+    float intervalX = 0.5857f;  // X 간격
+    float intervalZ = 0.5786f;  // Z 간격
+
+    // 랜덤 (i, j) 좌표 생성
+    int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
+    int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+
+    // (randomI, randomJ)에 해당하는 정확한 좌표 계산
+    float randomX = startX + randomI * intervalX;  // X 좌표
+    float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
+
+    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+
+    // X, Z 반대 주의!
+    map[randomJ][randomI] = 1;  // map 배열에 위치 표시
+
+    itembox.setIndex(randomI, randomJ);
+
+    itemBoxes.push_back(itembox);  // 벡터에 추가
+}
 
 // initialization
 bool Setup()
@@ -960,32 +989,9 @@ bool Setup()
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
     }
 
-    float startX = -4.1f;
-    float startZ = 3.8f;
-    float intervalX = 0.5857f;  // X 간격
-    float intervalZ = 0.5786f;  // Z 간격
-
     // 아이템 상자 랜덤 배치
     for (int i = 0; i < itemBox_num; i++) {
-        ItemBox itembox;  // 아이템 상자 객체 생성
-
-        // 랜덤 (i, j) 좌표 생성
-        int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
-        int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
-
-        // (randomI, randomJ)에 해당하는 정확한 좌표 계산
-        float randomX = startX + randomI * intervalX;  // X 좌표
-        float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
-
-        itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-        itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
-
-        // X, Z 반대 주의!
-        map[randomJ][randomI] = 1;  // map 배열에 위치 표시
-
-        itembox.setIndex(randomI, randomJ);
-
-        itemBoxes.push_back(itembox);  // 벡터에 추가
+        setRandomItemBox();
     }
 
 
@@ -1104,7 +1110,6 @@ void Cleanup(void)
 
 }
 
-
 // timeDelta represents the time between the current image frame and the last image frame.
 // timeDelta는 현재 이미지와 마지막 이미지의 프레임사이를 나타낸다.
 // the distance of moving balls should be "velocity * timeDelta"
@@ -1162,6 +1167,11 @@ bool Display(float timeDelta)
             player[1].draw(Device, g_mWorld);
             playerBody[1].draw(Device, g_mWorld);
             player[1].bindingPlayerBody(playerBody[1]);
+
+            // 아이템 상자들 그리기
+            for (int i = 0; i < itemBox_num; i++) {
+                itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+            }
 
             //1 player's boom
             for (int i = 0; i < MAX_BOOM; i++) {
@@ -1249,11 +1259,6 @@ bool Display(float timeDelta)
             break;
         }
         }
-        
-        // 아이템 상자들 그리기
-        for (int i = 0; i < itemBox_num; i++) {
-            itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
-        }
 
         //b_player1.boomUpdate(timeDelta);
         ////boom의 active 값이 true인 경우에만 보이도록 설정
@@ -1304,6 +1309,9 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case VK_RETURN:
             if (g_GameState == STATE_MENU) {
                 g_GameState = STATE_GAME;
+            }
+            else if (g_GameState == STATE_GAMEOVER) {
+                g_GameState = STATE_GAME;
                 resetGame(); // 게임 상태 초기화
             }
             break;
@@ -1325,12 +1333,18 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].updatePlayerIndex();
             for (int i = 0; i < player[0].getBombCap(); i++) {
                 if (!b_player1[i].getActive()) {
-                    b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-                    b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
-                    break;
+                    if (map[player[0].getPlayerIndexY()][player[0].getPlayerIndexX()] != 2) {
+                        //같은 위치에 여러번 설치 방지
+                        b_player1[i].setBoomRange(player[0].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
+                        b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+                        b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+                        break;
+                    }
                 }
             }
             break;
+
 
         case VK_UP:
             player[1].setPower(0, playerTwoSp);
@@ -1343,15 +1357,20 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[1].setPower(-playerTwoSp, 0);
             break;
         case VK_RIGHT:
-            player[1].setPower(playerTwoSp, 0);
+            player[1].setPower(playerTwoSp, 0); 
             break;
         case 'L':
             player[1].updatePlayerIndex();
             for (int i = 0; i < player[1].getBombCap(); i++) {
                 if (!b_player2[i].getActive()) {
-                    b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
-                    b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
-                    break;
+                    if (map[player[1].getPlayerIndexY()][player[1].getPlayerIndexX()] != 2) {
+                        //같은 위치에 여러번 설치 방지
+                        b_player2[i].setBoomRange(player[1].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
+                        b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
+                        b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
+                        break;
+                    }
                 }
             }
             break;
