@@ -49,15 +49,16 @@ D3DXMATRIX g_mProj;
 #define PLANE_X 6   //게임판의 x
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
+#define BOX_LENGTH 0.5f  // 상자 길이
 
 //맵 배치에 사용
 int map[15][15] = {
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -356,15 +357,15 @@ private:
 
 
 public:
+    //Explosion 생성
     bool createExplosion(IDirect3DDevice9* pDevice) {
         for (int i = 0; i < numOfExp; i++) {
             if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, d3d::RED)) return false;
         }
         return true;
     }
-    //Explosion 생성
-
-
+    
+    //키 눌렀을 때
     void pressKey(float sx, float py, float sz) {
         if (!b_isActive) {
             player1 = false;
@@ -375,7 +376,7 @@ public:
             map[b_indexZ][b_indexX] = 2;
         }
     }
-    //키 눌렀을 때
+
 
     void boomUpdate(float timeDelta) {
         if (!b_isActive) {
@@ -450,17 +451,17 @@ public:
         }
     }
 
+    //active 값 반환
     bool getActive() {
         return b_isActive;
     }
-    //active 값 반환
 
+    //아이템 먹고 폭탄 개수 늘려주기
     void setNumOfBoom(int numOfBoom) {
         if (numOfBoom <= b_max) {
             b_numOfBoom = numOfBoom;
         }
     }
-    //아이템 먹고 폭탄 개수 늘려주기
 
     int getNumOfBoom() {
         return b_numOfBoom;
@@ -634,6 +635,87 @@ public:
     }
 };
 
+class ItemBox {
+private:
+    float m_length;  // 정육면체 한 변의 길이
+    D3DXMATRIX m_mLocal;  // 로컬 변환 행렬
+    D3DMATERIAL9 m_mtrl;   // 재질 정보
+    ID3DXMesh* m_pBoxMesh; // 정육면체 메쉬 포인터
+
+    int m_indexX, m_indexZ;  // 해당 상자의 X, Z 좌표
+public:
+    // 생성자
+    ItemBox() : m_length(BOX_LENGTH), m_pBoxMesh(nullptr) {
+        ZeroMemory(&m_mtrl, sizeof(m_mtrl));
+        D3DXMatrixIdentity(&m_mLocal); // 로컬 변환 행렬 초기화
+    }
+
+    // 정육면체 생성
+    bool create(IDirect3DDevice9* pDevice, D3DXCOLOR color = D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)) {
+        if (pDevice == nullptr) return false;
+
+        // 정육면체 재질 설정
+        m_mtrl.Ambient = color;
+        m_mtrl.Diffuse = color;
+        m_mtrl.Specular = color;
+        m_mtrl.Emissive = D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f);
+        m_mtrl.Power = 5.0f;
+
+        // 정육면체 메쉬 생성
+        if (FAILED(D3DXCreateBox(pDevice, m_length, m_length, m_length, &m_pBoxMesh, nullptr))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // 정육면체 그리기
+    void draw(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
+        if (pDevice == nullptr || m_pBoxMesh == nullptr) return;
+
+        pDevice->SetTransform(D3DTS_WORLD, &mWorld);  // 월드 변환 설정
+        pDevice->MultiplyTransform(D3DTS_WORLD, &m_mLocal);  // 로컬 변환 적용
+        pDevice->SetMaterial(&m_mtrl);  // 재질 설정
+        m_pBoxMesh->DrawSubset(0);  // 메쉬 그리기
+    }
+
+    // 위치 설정
+    void setPosition(float x, float y, float z) {
+        D3DXMATRIX m;
+        D3DXMatrixTranslation(&m, x, y, z);  // 주어진 위치로 이동
+        m_mLocal = m;  // 로컬 변환 행렬 설정
+    }
+
+    // 위치 및 변환 관련 메서드
+    const D3DXMATRIX& getLocalTransform() const {
+        return m_mLocal;
+    }
+
+    // 정육면체의 한 변의 길이 반환
+    float getLength() const {
+        return m_length;
+    }
+
+    // 정육면체 메쉬 삭제
+    void destroy() {
+        if (m_pBoxMesh) {
+            m_pBoxMesh->Release();
+            m_pBoxMesh = nullptr;
+        }
+
+        // 해당 좌표의 map 값을 0으로 설정
+        if (m_indexX >= 0 && m_indexZ >= 0) {
+            map[m_indexZ][m_indexX] = 0;  // 좌표 위치에서 map 값 제거
+        }
+    }
+
+    void setIndex(float x, float z) {
+        m_indexX = x;
+        m_indexZ = z;
+    }
+};
+
+
 // -----------------------------------------------------------------------------
 // CLight class definition
 // -----------------------------------------------------------------------------
@@ -728,19 +810,14 @@ CWall   g_legoPlane;
 CWall   g_legowall[4];
 CWall   playerBody[2];
 
-
 CLight   g_light;
 
 CWall boundaryLineByX[14];//15x15사이즈 가로눈금선
 CWall boundaryLineByY[14];//15x15사이즈 세로눈금선
 
-
-
 double g_camera_pos[3] = { 0.0, 5.0, -8.0 };
 
 Player player[2];//플레이어 1p,2p
-
-
 
 int ss_y = 14;
 int ss_x = 12;
@@ -825,11 +902,10 @@ void resetGame() {
  
 }
 
-
-
-
-
-
+// 아이템 상자
+vector<ItemBox> itemBoxes;
+ItemBox itembox;
+int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 // -----------------------------------------------------------------------------
 // Functions
@@ -871,11 +947,10 @@ bool Setup()
     if (false == g_legowall[3].create(Device, -1, -1, 9, WALL_THICKNESS, 0.12f, d3d::DARKRED)) return false;
     g_legowall[3].setPosition(0.0f, 0.12f, -4.56f);
 
-    // create four balls and set the position
 
-    //경계선 그리기
-    //한칸 사이 간격은 0.6이다
-    //한칸이 즉 0.6*0.6
+    // 경계선 그리기
+    // 한칸 사이 간격은 0.6이다
+    // 한칸이 즉 0.6*0.6
     for (int i = 0; i < 14; i++) {
 
         if (false == boundaryLineByX[i].create(Device, -1, -1, 0.05f, 0.01f, 9, d3d::BLACK)) return false;
@@ -885,10 +960,33 @@ bool Setup()
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
     }
 
+    float startX = -4.1f;
+    float startZ = 3.8f;
+    float intervalX = 0.5857f;  // X 간격
+    float intervalZ = 0.5786f;  // Z 간격
 
+    // 아이템 상자 랜덤 배치
+    for (int i = 0; i < itemBox_num; i++) {
+        ItemBox itembox;  // 아이템 상자 객체 생성
 
+        // 랜덤 (i, j) 좌표 생성
+        int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
+        int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
 
+        // (randomI, randomJ)에 해당하는 정확한 좌표 계산
+        float randomX = startX + randomI * intervalX;  // X 좌표
+        float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
+        itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+        itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+
+        // X, Z 반대 주의!
+        map[randomJ][randomI] = 1;  // map 배열에 위치 표시
+
+        itembox.setIndex(randomI, randomJ);
+
+        itemBoxes.push_back(itembox);  // 벡터에 추가
+    }
 
 
     //플레이어 1 생성
@@ -1010,14 +1108,11 @@ void Cleanup(void)
 // timeDelta represents the time between the current image frame and the last image frame.
 // timeDelta는 현재 이미지와 마지막 이미지의 프레임사이를 나타낸다.
 // the distance of moving balls should be "velocity * timeDelta"
-// 움직인 고으이 거리는 velocity * timeDelta이다.
+// 움직인 공의 거리는 velocity * timeDelta이다.
 bool Display(float timeDelta)
 {
     int i = 0;
     int j = 0;
-
-
-
 
     if (Device)
     {
@@ -1131,7 +1226,6 @@ bool Display(float timeDelta)
 
             break;
         }
-
         case STATE_GAMEOVER: //게임오버화면
         {
             bool player1Won = (player[0].getPlayerLife() > 0);
@@ -1155,6 +1249,11 @@ bool Display(float timeDelta)
             break;
         }
         }
+        
+        // 아이템 상자들 그리기
+        for (int i = 0; i < itemBox_num; i++) {
+            itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+        }
 
         //b_player1.boomUpdate(timeDelta);
         ////boom의 active 값이 true인 경우에만 보이도록 설정
@@ -1171,8 +1270,6 @@ bool Display(float timeDelta)
     }
     return true;
 }
-
-
 
 
 
