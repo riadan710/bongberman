@@ -546,14 +546,6 @@ public:
         }
     }
 
-    //플레이어 리셋
-    void resetPlayer() {
-        this->playerLife = 3;
-        this->bombRange = 1;
-        this->bombCap = 1;
-        this->playerSpeed = 1.5f;
-    }
-
     // Getter와 Setter for bombRange
     int getBombRange() {
         return bombRange;
@@ -868,77 +860,6 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 ItemBox itembox;
 ItemBox* itemMap[15][15] = { nullptr };
 int itemBox_num = 20;   // 전체 아이템 상자 개수
-
-
-//게임 초기화 함수들(게임 오버됐을때 다시 시작)
-
-//맵 초기화 
-//초기 맵배열
-const int initialMap[15][15] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-};
-//맵을 초기 상태로 재설정
-void resetMap() {
-    for (int y = 0; y < 15; y++) {
-        for (int x = 0; x < 15; x++) {
-            map[y][x] = initialMap[y][x];
-        }
-    }
-}
-
-//폭탄상태 초기화
-void resetBombs() {
-    for (int i = 0; i < MAX_BOOM; i++) {
-        // 플레이어 1의 폭탄 초기화
-        b_player1[i].destroy(); // 기존 폭탄 제거
-        b_player1[i].create(Device, d3d::BLACK);
-        b_player1[i].createExplosion(Device);
-
-        // 플레이어 2의 폭탄 초기화
-        b_player2[i].destroy(); // 기존 폭탄 제거
-        b_player2[i].create(Device, d3d::GREEN);
-        b_player2[i].createExplosion(Device);
-    }
-}
-
-
-//위치 초기화
-void resetPlayerPositions() {
-    // 플레이어 1
-    player[0].setCenter(0.0f, (float)P_RADIUS + 0.5f, -3.5f);
-    player[0].setPower(0, 0);
-
-    // 플레이어 2
-    player[1].setCenter(4.5f, (float)P_RADIUS + 0.5f, -3.5f);
-    player[1].setPower(0, 0);
-}
-
-
-//게임상태 초기화(total)
-void resetGame() {
-
-    player[0].resetPlayer();
-    player[1].resetPlayer();
-
-    resetMap();
-    resetBombs();
-    resetPlayerPositions();
-
-
-}
 
 // -----------------------------------------------------------------------------
 // Functions
@@ -1311,7 +1232,7 @@ bool Display(float timeDelta)
             RECT rc2;
             SetRect(&rc2, 0, Height / 2 + 60, Width, Height / 2 + 120);
             if (g_pFont) {
-                g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc2,
+                g_pFont->DrawText(NULL, "Press ESC to quit", -1, &rc2,
                     DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
             }
 
@@ -1368,10 +1289,6 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case VK_RETURN:
             if (g_GameState == STATE_MENU) {
                 g_GameState = STATE_GAME;
-            }
-            else if (g_GameState == STATE_GAMEOVER) {
-                g_GameState = STATE_GAME;
-                resetGame(); // 게임 상태 초기화
             }
             break;
         case 'W':
