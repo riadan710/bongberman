@@ -393,20 +393,36 @@ public:
             explosion[0].setIndex(b_indexX, b_indexZ);
             for (int i = 0; i < b_range; i++) {
                 if (b_indexX + i + 1 < 15) {
-                    explosion[1 + i*4].activate(-4.2 + 0.6 * (b_indexX+i+1), 0, 4.2 - 0.6 * b_indexZ); // X +
-                    explosion[1 + i*4].setIndex(b_indexX + i+1, b_indexZ);
+                    if (map[b_indexZ][b_indexX + i + 1]) {
+                        break;
+                    }
+                    explosion[1 + i * 4].activate(-4.2 + 0.6 * (b_indexX + i + 1), 0, 4.2 - 0.6 * b_indexZ); // X +
+                    explosion[1 + i * 4].setIndex(b_indexX + i + 1, b_indexZ);
                 }
+            }
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexX - i - 1 > -1) {
+                    if (map[b_indexZ][b_indexX - i - 1]) {
+                        break;
+                    }
                     explosion[2 + i * 4].activate(-4.2 + 0.6 * (b_indexX - i - 1), 0, 4.2 - 0.6 * b_indexZ); // X -
                     explosion[2 + i * 4].setIndex(b_indexX - i - 1, b_indexZ);
                 }
-
+            }
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexZ + i + 1 < 15) {
+                    if (map[b_indexZ+i+1][b_indexX]) {
+                        break;
+                    }
                     explosion[3 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ + i + 1)); // Z +
                     explosion[3 + i * 4].setIndex(b_indexX, b_indexZ + i + 1);
                 }
-
+            }
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexZ - i - 1 > -1) {
+                    if (map[b_indexZ-i-1][b_indexX]) {
+                        break;
+                    }
                     explosion[4 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ - i - 1)); // Z -
                     explosion[4 + i * 4].setIndex(b_indexX, b_indexZ - i - 1);
                 }
@@ -481,7 +497,7 @@ public:
 class Player : public CSphere { //플레이어 저장하는 클래스
 private:
     int playerLife = 3;//플레이어 목숨
-    int bombRange = 1;//폭탄 범위
+    int bombRange = 2;//폭탄 범위
     int bombCap = 3;//폭탄용량
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
     int playerIndexX;
