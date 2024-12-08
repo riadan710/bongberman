@@ -1,15 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// File: virtualLego.cpp
-//
-// Original Author: 박창현 Chang-hyeon Park, 
-// Modified by Bong-Soo Sohn and Dong-Jun Kim
-// 
-// Originally programmed for Virtual LEGO. 
-// Modified later to program for Virtual Billiard.
-//        
-////////////////////////////////////////////////////////////////////////////////
-
 #include "d3dUtility.h"
 #include <vector>
 #include <ctime>
@@ -28,23 +16,15 @@ IDirect3DDevice9* Device = NULL;
 const int Width = 1024;
 const int Height = 768;
 
-// 공(ball)의 개수와 초기 위치 정의
-const float spherePos[4][2] = { {-2.7f,0}, {+2.4f,0}, {3.3f,0}, {-2.7f,-0.9f} };
-// 공의 색상 설정
-const D3DXCOLOR sphereColor[4] = { d3d::RED, d3d::RED, d3d::YELLOW, d3d::WHITE };
-
-// -----------------------------------------------------------------------------
 // 변환 행렬 선언 (월드, 뷰, 투영)
-// -----------------------------------------------------------------------------
 D3DXMATRIX g_mWorld;
 D3DXMATRIX g_mView;
 D3DXMATRIX g_mProj;
 
 // 공 반지름 및 기타 상수 정의
 #define M_RADIUS 0.29   // 공 반지름
-#define P_RADIUS 0.21   //플레이어 머리용 반지름
-#define I_RADIUS 0.17   //아이템용 반지름
-#define PI 3.14159265
+#define P_RADIUS 0.21   // 플레이어 머리용 반지름
+#define I_RADIUS 0.17   // 아이템용 반지름
 #define M_HEIGHT 0.01
 #define DECREASE_RATE 1 
 #define PLANE_X 6   //게임판의 x
@@ -53,7 +33,7 @@ D3DXMATRIX g_mProj;
 #define BOX_LENGTH 0.5f  // 상자 길이
 #define BOX_COUNT 30    // 상자 개수
 
-//맵 배치에 사용
+//맵 배치에 사용 (상자는 1, 폭탄은 2)
 int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -71,7 +51,6 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
-//일단 폭탄은 2로 설정
 
 
 //게임상태 정의
@@ -86,10 +65,7 @@ GameState g_GameState = STATE_MENU;
 void destroyItemBoxAt(int x, int z);
 
 
-
-// -----------------------------------------------------------------------------
 // 공(CSphere) 클래스 정의
-// -----------------------------------------------------------------------------
 class CSphere {
 protected:
     float center_x, center_y, center_z; // 공의 중심 좌표
@@ -205,13 +181,8 @@ private:
 };
 
 
-
-// -----------------------------------------------------------------------------
-// CWall class definition
-// -----------------------------------------------------------------------------
-
+// 벽(CWall) 클래스 정의
 class CWall {
-
 private:
 
     float               m_x;
@@ -292,8 +263,7 @@ private:
     ID3DXMesh* m_pBoundMesh;
 };
 
-
-
+// 폭탄 폭발 클래스
 class CExplosion : public CWall {
 private:
     bool e_isActive = false;
@@ -343,6 +313,7 @@ public:
     }
 };
 
+// 폭탄 클래스
 class CBoom : public CSphere {
 private:
     float b_time;
@@ -359,7 +330,6 @@ private:
 
     bool player1 = false;
     bool player2 = false;
-
 
 public:
     //Explosion 생성
@@ -507,6 +477,7 @@ public:
     }
 };
 
+// 플레이어 클래스
 class Player : public CSphere { //플레이어 저장하는 클래스
 private:
     int playerLife = 3;//플레이어 목숨
@@ -662,8 +633,7 @@ public:
     }
 };
 
-
-
+// 아이템 상자 클래스
 class ItemBox {
 private:
     float m_length;  // 정육면체 한 변의 길이
@@ -752,6 +722,7 @@ public:
     }
 };
 
+// 아이템 클래스
 class CItem : public CSphere {
 private:
     int itemType; //1. 폭탄 개수 증가 2. 폭탄 범위 증가 3. 이속증가
@@ -823,10 +794,7 @@ public:
     }
 };
 
-// -----------------------------------------------------------------------------
-// CLight class definition
-// -----------------------------------------------------------------------------
-
+// 광원(CLight) 클래스
 class CLight {
 public:
     CLight(void)
@@ -1053,29 +1021,23 @@ void setRandomItemBox() {
 // initialization
 bool Setup()
 {
-
-
-    int i;
-    OutputDebugStringA("This is a test message.\n");
     D3DXMatrixIdentity(&g_mWorld);
     D3DXMatrixIdentity(&g_mView);
     D3DXMatrixIdentity(&g_mProj);
 
-    //15x15 사이즈 만들듯 흠
-    // create plane and set the position
+    // 15x15 사이즈 맵
     if (false == g_legoPlane.create(Device, -1, -1, 9, 0.03f, 9, d3d::WHITE)) return false;
     g_legoPlane.setPosition(0.0f, -0.0006f / 5, 0.0f);
     //-0.00012 + 0.015
 
-    // create walls and set the position. note that there are four walls
+    // 벽 생성
     if (false == g_legowall[0].create(Device, -1, -1, 9, WALL_THICKNESS, 0.12f, d3d::DARKRED)) return false;
     g_legowall[0].setPosition(0.0f, 0.12f, 4.56f);
     if (false == g_legowall[1].create(Device, -1, -1, 0.12f, WALL_THICKNESS, 9, d3d::DARKRED)) return false;
     g_legowall[1].setPosition(-4.56f, 0.12f, 0.0f);
 
 
-    // Device ,float ix, float iz, float iwidth, float iheight, float idepth, D3DXCOLOR color = d3d::WHITE
-    //가로길이, 벽 높이, 세로길이
+    // 가로길이, 벽 높이, 세로길이
     if (false == g_legowall[2].create(Device, -1, -1, 0.12f, WALL_THICKNESS, 9, d3d::DARKRED)) return false;
     g_legowall[2].setPosition(4.56f, 0.12f, 0.0f);
     if (false == g_legowall[3].create(Device, -1, -1, 9, WALL_THICKNESS, 0.12f, d3d::DARKRED)) return false;
@@ -1107,8 +1069,15 @@ bool Setup()
     if (false == playerBody[0].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::RED)) return false;
     playerBody[0].setPosition(0.0f, 0.3f, 0.0f);
 
+    //플레이어 2 생성 
+    if (false == player[1].create(Device, d3d::BLUE)) return false;
+    player[1].setCenter(4.1f, (float)P_RADIUS + 0.5f, -4.3f);   // 오른쪽 맨 아래
+    player[1].setPower(0, 0);
+    if (false == playerBody[1].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::BLUE)) return false;
+    playerBody[1].setPosition(0.0f, 0.3f, 0.0f);
 
-    //boom 생성
+
+    // boom(폭탄) 생성
     for (int i = 0; i < MAX_BOOM; i++) {
         if (false == b_player1[i].create(Device, d3d::RED)) return false;
         if (false == b_player1[i].createExplosion(Device, d3d::RED))return false;
@@ -1118,15 +1087,7 @@ bool Setup()
     }
 
 
-    //플레이어 2 생성 
-    if (false == player[1].create(Device, d3d::BLUE)) return false;
-    player[1].setCenter(4.1f, (float)P_RADIUS + 0.5f, -4.3f);   // 오른쪽 맨 아래
-    player[1].setPower(0, 0);
-    if (false == playerBody[1].create(Device, -1, -1, 0.3f, 0.6f, 0.3f, d3d::BLUE)) return false;
-    playerBody[1].setPosition(0.0f, 0.3f, 0.0f);
-
-
-    // light setting 
+    // 광원 설정
     D3DLIGHT9 lit;
     ::ZeroMemory(&lit, sizeof(lit));
     lit.Type = D3DLIGHT_POINT;
@@ -1142,10 +1103,7 @@ bool Setup()
         return false;
 
 
-
-    //카메라 위치 고정할듯?
-    // Position and aim the camera.
-    //z가 좀 기울어지게 하는ㄴ 
+    // 카메라 위치 고정
     D3DXVECTOR3 pos(0.0f, 10.0f, -10.0f);
     D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
     D3DXVECTOR3 up(0.0f, 0.1f, 5.0f);
@@ -1165,7 +1123,7 @@ bool Setup()
     g_light.setLight(Device, g_mWorld);
 
 
-    //폰트1
+    // 작은 폰트 설정
     D3DXFONT_DESC fd;
     ZeroMemory(&fd, sizeof(fd));
     fd.Height = 24; // 글자 크기
@@ -1182,7 +1140,7 @@ bool Setup()
         return false;
     }
 
-    //폰트2
+    // 큰 폰트 설정
     D3DXFONT_DESC fdLarge;
     ZeroMemory(&fdLarge, sizeof(fdLarge));
     fdLarge.Height = 48; // 글자 크기 크게
@@ -1199,7 +1157,6 @@ bool Setup()
         return false;
     }
 
-
     return true;
 }
 
@@ -1214,9 +1171,7 @@ void Cleanup(void)
 
 }
 
-// timeDelta represents the time between the current image frame and the last image frame.
 // timeDelta는 현재 이미지와 마지막 이미지의 프레임사이를 나타낸다.
-// the distance of moving balls should be "velocity * timeDelta"
 // 움직인 공의 거리는 velocity * timeDelta이다.
 bool Display(float timeDelta)
 {
@@ -1281,7 +1236,7 @@ bool Display(float timeDelta)
                 }
             }
 
-            //1 player's boom
+            // 1P 폭탄
             for (int i = 0; i < MAX_BOOM; i++) {
                 if (b_player1[i].getActive()) {
                     b_player1[i].draw(Device, g_mWorld);
@@ -1301,7 +1256,7 @@ bool Display(float timeDelta)
                     player[1].setPlayerLife();
                 }
 
-                //2 player's boom
+                // 2P 폭탄
                 if (b_player2[i].getActive()) {
                     b_player2[i].draw(Device, g_mWorld);
                 }
@@ -1329,12 +1284,10 @@ bool Display(float timeDelta)
                 SetRect(&lifeRect, 10, 10, 0, 0); // 왼쪽 상단 근처
                 char lifeText[128];
                 sprintf_s(lifeText, "P1 Life: %d", player[0].getPlayerLife());
-                // 플레이어 1 목숨: 빨간색
                 g_pFontLarge->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0));
 
                 SetRect(&lifeRect, 10, 70, 0, 0); // P1 목숨 아래쪽에 P2 목숨 표시
                 sprintf_s(lifeText, "P2 Life: %d", player[1].getPlayerLife());
-                // 플레이어 2 목숨: 파란색
                 g_pFontLarge->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(0, 0, 255));
 
 
@@ -1352,7 +1305,7 @@ bool Display(float timeDelta)
                 g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(0, 0, 255)); // 파란색
 
                 // 플레이어 조작 설명
-                SetRect(&lifeRect, 300, 40, 0, 0); // 조작 설명 시작 위치
+                SetRect(&lifeRect, 300, 40, 0, 0);  // 조작 설명 가운데
                 sprintf_s(lifeText, "P1 : WASD to move, F to Bomb");
                 g_pFont->DrawText(NULL, lifeText, -1, &lifeRect, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0)); // 흰색
 
@@ -1369,10 +1322,10 @@ bool Display(float timeDelta)
 
             //아이템 관련 함수
             for (int i = 0; i < itemList.size(); i++) {
-                bool isItem = false;//아이템 먹었는지 안먹었는지 확인해주기,,^^
+                bool isItem = false;    // 아이템 먹었는지 안먹었는지 확인
                 itemList[i].draw(Device, g_mWorld);
                 itemList[i].ballAnimation(timeDelta);
-                //플레이어 1이랑 2랑 먹었는지 확인하기
+                // 플레이어 1이랑 2랑 먹었는지 확인하기
                 isItem = itemList[i].hitBy(player[1], i);
                 if (isItem) {
                     itemList[i].destroy();
@@ -1391,7 +1344,7 @@ bool Display(float timeDelta)
 
             break;
         }
-        case STATE_GAMEOVER: //게임오버화면
+        case STATE_GAMEOVER: // 게임오버화면
         {
             bool player1Won = (player[0].getPlayerLife() > 0);
             bool player2Won = (player[1].getPlayerLife() > 0);
@@ -1415,22 +1368,12 @@ bool Display(float timeDelta)
         }
         }
 
-        //b_player1.boomUpdate(timeDelta);
-        ////boom의 active 값이 true인 경우에만 보이도록 설정
-        //b_player1.drawExplosions(Device, g_mWorld);
-        //player[0].updatePlayerIndex();
-        //bool p1 = b_player1.updateExplosions(timeDelta,player[0].getPlayerIndexX(),player[0].getPlayerIndexY());
-        //if (p1) {
-        //    player[0].setPlayerLife();
-        //}
-
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
         Device->SetTexture(0, NULL);
     }
     return true;
 }
-
 
 
 
@@ -1445,8 +1388,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     static bool keyStates[256] = { false };
     double playerOneSp = player[0].getPlayerSpeed();
     double playerTwoSp = player[1].getPlayerSpeed();
-    //중요한건 이속아이템을 먹을 변형이 가능한가?
-    //getVelocity 얻어와서 변형해주면 될듯?
+
     switch (msg) {
     case WM_DESTROY:
     {
@@ -1534,7 +1476,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         switch (wParam) {
         case 'W':
-            if (player[0].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
+            if (player[0].getVelocity_X() == 0) {   //a나 d키 누르고 있으면 안변하게
                 player[0].setPower(0, 0);
             }
 
@@ -1559,23 +1501,23 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 'F':
 
         case VK_UP:
-            if (player[1].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
+            if (player[1].getVelocity_X() == 0) {   //a나 d키 누르고 있으면 안변하게
                 player[1].setPower(0, 0);
             }
             break;
         case VK_DOWN:
-            if (player[1].getVelocity_X() == 0) {//a나 d키 누르고 있으면 안변하게
+            if (player[1].getVelocity_X() == 0) {   //a나 d키 누르고 있으면 안변하게
                 player[1].setPower(0, 0);
             }
             break;
         case VK_LEFT:
-            if (player[1].getVelocity_Z() == 0) {//a나 d키 누르고 있으면 안변하게
+            if (player[1].getVelocity_Z() == 0) {   //a나 d키 누르고 있으면 안변하게
                 player[1].setPower(0, 0);
             }
             break;
 
         case VK_RIGHT:
-            if (player[1].getVelocity_Z() == 0) {//a나 d키 누르고 있으면 안변하게
+            if (player[1].getVelocity_Z() == 0) {   //a나 d키 누르고 있으면 안변하게
                 player[1].setPower(0, 0);
             }
             break;
@@ -1615,6 +1557,7 @@ int WINAPI WinMain(HINSTANCE hinstance,
         ::MessageBox(0, "Setup() - FAILED", 0, 0);
         return 0;
     }
+
     //Display가 계속해서 실행됨
     d3d::EnterMsgLoop(Display);
 
