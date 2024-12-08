@@ -342,15 +342,15 @@ private:
     bool player2 = false;
 
 public:
+    //Explosion 생성
     bool createExplosion(IDirect3DDevice9* pDevice) {
         for (int i = 0; i < numOfExp; i++) {
             if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, d3d::RED)) return false;
         }
         return true;
     }
-    //Explosion 생성
-
-
+    
+    //키 눌렀을 때
     void pressKey(float sx, float py, float sz) {
         if (!b_isActive) {
             player1 = false;
@@ -361,7 +361,7 @@ public:
             map[b_indexZ][b_indexX] = 2;
         }
     }
-    //키 눌렀을 때
+
 
     void boomUpdate(float timeDelta) {
         if (!b_isActive) {
@@ -414,17 +414,17 @@ public:
         }
     }
 
+    //active 값 반환
     bool getActive() {
         return b_isActive;
     }
-    //active 값 반환
 
+    //아이템 먹고 폭탄 개수 늘려주기
     void setNumOfBoom(int numOfBoom) {
         if (numOfBoom <= b_max) {
             b_numOfBoom = numOfBoom;
         }
     }
-    //아이템 먹고 폭탄 개수 늘려주기
 
     int getNumOfBoom() {
         return b_numOfBoom;
@@ -597,6 +597,7 @@ private:
     D3DMATERIAL9 m_mtrl;   // 재질 정보
     ID3DXMesh* m_pBoxMesh; // 정육면체 메쉬 포인터
 
+    int m_indexX, m_indexZ;  // 해당 상자의 X, Z 좌표
 public:
     // 생성자
     ItemBox() : m_length(BOX_LENGTH), m_pBoxMesh(nullptr) {
@@ -656,6 +657,16 @@ public:
             m_pBoxMesh->Release();
             m_pBoxMesh = nullptr;
         }
+
+        // 해당 좌표의 map 값을 0으로 설정
+        if (m_indexX >= 0 && m_indexZ >= 0) {
+            map[m_indexZ][m_indexX] = 0;  // 좌표 위치에서 map 값 제거
+        }
+    }
+
+    void setIndex(float x, float z) {
+        m_indexX = x;
+        m_indexZ = z;
     }
 };
 
@@ -774,7 +785,6 @@ vector<ItemBox> itemBoxes;
 ItemBox itembox;
 int itemBox_num = 20;   // 전체 아이템 상자 개수
 
-
 // -----------------------------------------------------------------------------
 // Functions
 // -----------------------------------------------------------------------------
@@ -847,7 +857,10 @@ bool Setup()
         itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
         itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
+        // X, Z 반대 주의!
         map[randomJ][randomI] = 1;  // map 배열에 위치 표시
+
+        itembox.setIndex(randomI, randomJ);
 
         itemBoxes.push_back(itembox);  // 벡터에 추가
     }
