@@ -519,6 +519,14 @@ public:
         }
     }
 
+    //플레이어 리셋
+    void resetPlayer() {
+        this->playerLife = 3;
+        this->bombRange = 1;
+        this->bombCap = 1;
+        this->playerSpeed = 1.5f;
+    }
+
     // Getter와 Setter for bombRange
     int getBombRange() {
         return bombRange;
@@ -747,6 +755,82 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
 
 
+//게임 초기화 함수들(게임 오버됐을때 다시 시작)
+
+//맵 초기화 
+//초기 맵배열
+const int initialMap[15][15] = {
+    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+//맵을 초기 상태로 재설정
+void resetMap() {
+    for (int y = 0; y < 15; y++) {
+        for (int x = 0; x < 15; x++) {
+            map[y][x] = initialMap[y][x];
+        }
+    }
+}
+
+//폭탄상태 초기화
+void resetBombs() {
+    for (int i = 0; i < MAX_BOOM; i++) {
+        // 플레이어 1의 폭탄 초기화
+        b_player1[i].destroy(); // 기존 폭탄 제거
+        b_player1[i].create(Device, d3d::BLACK);
+        b_player1[i].createExplosion(Device);
+
+        // 플레이어 2의 폭탄 초기화
+        b_player2[i].destroy(); // 기존 폭탄 제거
+        b_player2[i].create(Device, d3d::GREEN);
+        b_player2[i].createExplosion(Device);
+    }
+}
+
+
+//위치 초기화
+void resetPlayerPositions() {
+    // 플레이어 1
+    player[0].setCenter(0.0f, (float)P_RADIUS + 0.5f, -3.5f);
+    player[0].setPower(0, 0);
+
+    // 플레이어 2
+    player[1].setCenter(4.5f, (float)P_RADIUS + 0.5f, -3.5f);
+    player[1].setPower(0, 0);
+}
+
+
+//게임상태 초기화(total)
+void resetGame() {
+
+    player[0].resetPlayer();
+    player[1].resetPlayer();
+
+    resetMap();
+    resetBombs();
+    resetPlayerPositions();
+
+ 
+}
+
+
+
+
+
+
+
 // -----------------------------------------------------------------------------
 // Functions
 // -----------------------------------------------------------------------------
@@ -756,6 +840,7 @@ void destroyAllLegoBlock(void)
 {
 
 }
+
 
 // initialization
 bool Setup()
@@ -1046,18 +1131,27 @@ bool Display(float timeDelta)
 
             break;
         }
-        case STATE_GAMEOVER:  //게임오버화면
-        {
-            if (g_pFont) {
-                RECT rc; SetRect(&rc, 50, 50, 0, 0);
-                const char* winner = (player[0].getPlayerLife() > 0) ? "Player1" : "Player2";
-                char msg[256];
-                sprintf_s(msg, "%s Wins!", winner);
-                g_pFont->DrawText(NULL, msg, -1, &rc, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0));
 
-                rc.top += 30;
-                g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc, DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
+        case STATE_GAMEOVER: //게임오버화면
+        {
+            bool player1Won = (player[0].getPlayerLife() > 0);
+            bool player2Won = (player[1].getPlayerLife() > 0);
+            const char* winnerText = player1Won ? "Player1 Wins!" : "Player2 Wins!";
+            D3DCOLOR winnerColor = player1Won ? D3DCOLOR_XRGB(255, 0, 0) : D3DCOLOR_XRGB(0, 0, 255);
+
+            RECT rc;
+            SetRect(&rc, 0, Height / 2 - 50, Width, Height / 2 + 50);
+            if (g_pFontLarge) {
+                g_pFontLarge->DrawText(NULL, winnerText, -1, &rc,
+                    DT_CENTER | DT_VCENTER | DT_SINGLELINE, winnerColor);
             }
+            RECT rc2;
+            SetRect(&rc2, 0, Height / 2 + 60, Width, Height / 2 + 120);
+            if (g_pFont) {
+                g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc2,
+                    DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
+            }
+
             break;
         }
         }
@@ -1111,17 +1205,9 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ::DestroyWindow(hwnd);
             break;
         case VK_RETURN:
-            if (g_GameState == STATE_MENU) {
+            if (g_GameState == STATE_MENU || g_GameState == STATE_GAMEOVER) {
                 g_GameState = STATE_GAME;
-                player[0].setCenter(.0f, (float)P_RADIUS + 0.5f, -3.5f);
-                //player[0].setPlayerLife(3); 
-                //player[1].setPlayerLife(3); 
-            }
-            else if (g_GameState == STATE_GAMEOVER) {
-                // 게임 재시작
-                g_GameState = STATE_MENU;
-                //player[0].setPlayerLife(3);
-                //player[1].setPlayerLife(3);
+                resetGame(); // 게임 상태 초기화
             }
             break;
         case 'W':
