@@ -35,7 +35,7 @@ D3DXMATRIX g_mProj;
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
 #define BOX_LENGTH 0.5f  // 상자 길이
-#define BOX_COUNT 30    // 상자 개수
+#define BOX_COUNT 45    // 상자 개수
 
 
 
@@ -507,6 +507,9 @@ private:
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
     int playerIndexX;
     int playerIndexY;
+    float animTime = 0;
+    bool animDraw = true;
+
 public:
     void updatePlayerIndex() {
         //0,0칸은 -4.5, 4.5임 여기서 플레이어 반지름을 빼서 벽에서 못나가게 하는걸 구하자
@@ -517,6 +520,13 @@ public:
         //OutputDebugString((message + "\n").c_str());
     }
 
+    bool getAnimDraw() {
+        return this->animDraw;
+    }
+
+    float getAnimTime() {
+        return this->animTime;
+    }
 
 
     int getPlayerIndexX() {
@@ -535,6 +545,8 @@ public:
 
     void setPlayerLife() {
         this->playerLife -= 1;
+        this -> animTime = 1.0f;
+        
         char buffer[100];
         sprintf(buffer, "Player Life: %d\n", this->playerLife);
         OutputDebugString(buffer);
@@ -650,6 +662,31 @@ public:
     }
     void bindingPlayerBody(CWall& body) {
         body.setPosition(this->center_x, 0.3f, this->center_z);
+
+    }
+    void ballAnimation(float deltaTime) {
+        float animTime = this->animTime;
+        this->animTime -= deltaTime;
+        animTime -= deltaTime;
+        if (animTime < 0) {
+            this->animDraw = true;
+            this->animTime = 0;
+        }
+        else if (animTime < 0.2) {
+            this->animDraw = false;
+        }
+        else if (animTime < 0.4) {
+            this->animDraw = true;
+        }
+        else if (animTime < 0.6) {
+            this->animDraw = false;
+        }
+        else if (animTime < 0.8) {
+            this->animDraw = true;
+        }
+        else if (animTime < 1) {
+            this->animDraw = false;
+        }
 
     }
 };
@@ -802,7 +839,6 @@ public:
         else if (height <= I_RADIUS) {
             this->animDir = false;//false면 올려잇
         }
-        
         if (animDir) {
             height -= deltaTime;
         }
@@ -1254,14 +1290,27 @@ bool Display(float timeDelta)
             for (i = 0; i < 4; i++) {
                 g_legowall[i].draw(Device, g_mWorld);
             }
-
+            //1p 그리기
             player[0].ballUpdate(timeDelta);
-            player[0].draw(Device, g_mWorld);
-            playerBody[0].draw(Device, g_mWorld);
+            if (player[0].getAnimTime() != 0) {
+                player[0].ballAnimation(timeDelta);
+            }
+            if (player[0].getAnimDraw()) {
+                player[0].draw(Device, g_mWorld);
+                playerBody[0].draw(Device, g_mWorld);
+            }
+            
             player[0].bindingPlayerBody(playerBody[0]);
+            //2p 그리기
             player[1].ballUpdate(timeDelta);
-            player[1].draw(Device, g_mWorld);
-            playerBody[1].draw(Device, g_mWorld);
+            if (player[1].getAnimTime() != 0) {
+                player[1].ballAnimation(timeDelta);
+            }
+            if (player[1].getAnimDraw()) {
+                player[1].draw(Device, g_mWorld);
+                playerBody[1].draw(Device, g_mWorld);
+            }
+            
             player[1].bindingPlayerBody(playerBody[1]);
 
             // 아이템 상자들 그리기
