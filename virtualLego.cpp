@@ -830,6 +830,10 @@ CBoom b_player2[MAX_BOOM];
 ID3DXFont* g_pFont = NULL; //폰트1 변수
 ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
+// 아이템 상자
+vector<ItemBox> itemBoxes;
+ItemBox itembox;
+int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 
 //게임 초기화 함수들(게임 오버됐을때 다시 시작)
@@ -837,19 +841,19 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 //맵 초기화 
 //초기 맵배열
 const int initialMap[15][15] = {
-    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 //맵을 초기 상태로 재설정
@@ -899,24 +903,44 @@ void resetGame() {
     resetBombs();
     resetPlayerPositions();
 
- 
-}
 
-// 아이템 상자
-vector<ItemBox> itemBoxes;
-ItemBox itembox;
-int itemBox_num = 20;   // 전체 아이템 상자 개수
+}
 
 // -----------------------------------------------------------------------------
 // Functions
 // -----------------------------------------------------------------------------
-
 
 void destroyAllLegoBlock(void)
 {
 
 }
 
+void setRandomItemBox() {
+    ItemBox itembox;  // 아이템 상자 객체 생성
+
+    float startX = -4.1f;
+    float startZ = 3.8f;
+    float intervalX = 0.5857f;  // X 간격
+    float intervalZ = 0.5786f;  // Z 간격
+
+    // 랜덤 (i, j) 좌표 생성
+    int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
+    int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
+
+    // (randomI, randomJ)에 해당하는 정확한 좌표 계산
+    float randomX = startX + randomI * intervalX;  // X 좌표
+    float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
+
+    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+
+    // X, Z 반대 주의!
+    map[randomJ][randomI] = 1;  // map 배열에 위치 표시
+
+    itembox.setIndex(randomI, randomJ);
+
+    itemBoxes.push_back(itembox);  // 벡터에 추가
+}
 
 // initialization
 bool Setup()
@@ -960,32 +984,9 @@ bool Setup()
         boundaryLineByY[i].setPosition(0.0f, 0.015f, -4.5f + 0.6 + 0.6 * i);
     }
 
-    float startX = -4.1f;
-    float startZ = 3.8f;
-    float intervalX = 0.5857f;  // X 간격
-    float intervalZ = 0.5786f;  // Z 간격
-
     // 아이템 상자 랜덤 배치
     for (int i = 0; i < itemBox_num; i++) {
-        ItemBox itembox;  // 아이템 상자 객체 생성
-
-        // 랜덤 (i, j) 좌표 생성
-        int randomI = rand() % 15;  // 0부터 14까지의 랜덤 값 (X축)
-        int randomJ = rand() % 15;  // 0부터 14까지의 랜덤 값 (Z축)
-
-        // (randomI, randomJ)에 해당하는 정확한 좌표 계산
-        float randomX = startX + randomI * intervalX;  // X 좌표
-        float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
-
-        itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-        itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
-
-        // X, Z 반대 주의!
-        map[randomJ][randomI] = 1;  // map 배열에 위치 표시
-
-        itembox.setIndex(randomI, randomJ);
-
-        itemBoxes.push_back(itembox);  // 벡터에 추가
+        setRandomItemBox();
     }
 
 
@@ -1104,7 +1105,6 @@ void Cleanup(void)
 
 }
 
-
 // timeDelta represents the time between the current image frame and the last image frame.
 // timeDelta는 현재 이미지와 마지막 이미지의 프레임사이를 나타낸다.
 // the distance of moving balls should be "velocity * timeDelta"
@@ -1162,6 +1162,11 @@ bool Display(float timeDelta)
             player[1].draw(Device, g_mWorld);
             playerBody[1].draw(Device, g_mWorld);
             player[1].bindingPlayerBody(playerBody[1]);
+
+            // 아이템 상자들 그리기
+            for (int i = 0; i < itemBox_num; i++) {
+                itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+            }
 
             //1 player's boom
             for (int i = 0; i < MAX_BOOM; i++) {
@@ -1249,11 +1254,6 @@ bool Display(float timeDelta)
             break;
         }
         }
-        
-        // 아이템 상자들 그리기
-        for (int i = 0; i < itemBox_num; i++) {
-            itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
-        }
 
         //b_player1.boomUpdate(timeDelta);
         ////boom의 active 값이 true인 경우에만 보이도록 설정
@@ -1302,7 +1302,10 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ::DestroyWindow(hwnd);
             break;
         case VK_RETURN:
-            if (g_GameState == STATE_MENU || g_GameState == STATE_GAMEOVER) {
+            if (g_GameState == STATE_MENU) {
+                g_GameState = STATE_GAME;
+            }
+            else if (g_GameState == STATE_GAMEOVER) {
                 g_GameState = STATE_GAME;
                 resetGame(); // 게임 상태 초기화
             }
