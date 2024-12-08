@@ -43,6 +43,7 @@ D3DXMATRIX g_mProj;
 // 공 반지름 및 기타 상수 정의
 #define M_RADIUS 0.29   // 공 반지름
 #define P_RADIUS 0.21   //플레이어 머리용 반지름
+#define I_RADIUS 0.17   //아이템용 반지름
 #define PI 3.14159265
 #define M_HEIGHT 0.01
 #define DECREASE_RATE 1 
@@ -289,6 +290,8 @@ private:
     D3DMATERIAL9            m_mtrl;
     ID3DXMesh* m_pBoundMesh;
 };
+
+
 
 class CExplosion : public CWall {
 private:
@@ -546,27 +549,28 @@ public:
         }
     }
 
-    // Getter와 Setter for bombRange
+
+
     int getBombRange() {
         return bombRange;
     }
 
-    void setBombRange(int range) {//setter 대신에 그냥 아이템 먹으면 이거 증가함
+    void setBombRange() {//setter 대신에 그냥 아이템 먹으면 이거 증가함
         this->bombRange += 1;
     }
 
-    // Getter와 Setter for bombCap
+    
     int getBombCap() {
         return this->bombCap;
     }
 
-    void setBombCap(int cap) {//setter 대신에 그냥 아이템 먹으면 이거 증가함
+    void setBombCap() {//setter 대신에 그냥 아이템 먹으면 이거 증가함
         this->bombCap += 1;
     }
 
 
 
-    void setPlayerSpeed(float speed) {//증가는 얼마나 증가할지 생각해야겠는데
+    void setPlayerSpeed() {//증가는 얼마나 증가할지 생각해야겠는데
         this->playerSpeed += 0.3f;
     }
 
@@ -652,6 +656,8 @@ public:
 
     }
 };
+
+
 
 class ItemBox {
 private:
@@ -741,6 +747,59 @@ public:
     }
 };
 
+class CItem : public CSphere {
+private:
+    int itemType; //1. 폭탄 개수 증가 2. 폭탄 범위 증가 3. 이속증가
+public:
+    void setItemType(int i) {
+        this->itemType = i;
+    }
+
+    float getRadius(void)  const override { return (float)(I_RADIUS); };//아이템용 radius
+
+    bool hasIntersected(Player& player) {//플레이어가 아이템의 위치로 들어왔는지 확인
+        D3DXVECTOR3 center1 = this->getCenter();
+        D3DXVECTOR3 center2 = player.getCenter();
+
+        float dx = center1.x - center2.x;
+        float dz = center1.z - center2.z;
+
+        float distance = sqrt(dx * dx + dz * dz);
+
+        float radiusSum = this->getRadius() + 0.17f;//여기서 임시 radius를 넣으면 된다. 상자 3루트2
+        return distance <= radiusSum;
+
+    }
+
+    // 충돌 처리
+    bool hitBy(Player& player, int itemIndex) {//플레이어가 아이템 먹었을때
+        if (!this->hasIntersected(player)) return false;
+        //1. 폭탄 개수 증가 2. 폭탄 범위 증가 3. 이속증가
+        switch (this->itemType)//플레이어한테 능력치 부여
+        {
+        case 1:
+            player.setBombCap();
+            break;
+        case 2:
+            player.setBombRange();
+            break;
+        case 3:
+            player.setPlayerSpeed();
+            break;
+
+        default:
+            break;
+        }
+        //해당 아이템 지워줌
+        //근데 이렇게 지우면? for문에서 아이템 한개를 뛰어 넘을것만 같어
+        //for문에서 줄어드는걸 해줘야겠다
+        
+        
+
+
+        return true;
+    }
+};
 
 // -----------------------------------------------------------------------------
 // CLight class definition
@@ -858,12 +917,39 @@ ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
 // 아이템 상자
 ItemBox itembox;
+
 ItemBox* itemMap[15][15] = { nullptr };
+
 int itemBox_num = 20;   // 전체 아이템 상자 개수
+
 
 // -----------------------------------------------------------------------------
 // Functions
 // -----------------------------------------------------------------------------
+
+
+//박스 터졌을때 아이템 만드는지 확인하기
+bool itemMake(int itemType, float pos_x, float pos_z) {
+    CItem item;
+    D3DXCOLOR itemColor;
+    
+    switch (itemType + 1)//플레이어한테 능력치 부여
+    {
+    case 1:
+        itemColor = d3d::DARKRED;
+        break;
+    case 2:
+        itemColor = d3d::YELLOW;
+        break;
+    case 3:
+        itemColor = d3d::WHITE;
+        break;
+    }
+    if (false == item.create(Device, itemColor)) return false;
+    item.setCenter(pos_x, (float)P_RADIUS + 0.5f, pos_z);
+    item.setItemType(itemType + 1);
+    itemList.push_back(item);
+}
 
 void destroyAllLegoBlock(void)
 {
@@ -877,6 +963,14 @@ void destroyItemBoxAt(int x, int z) {
     }
 
     if (itemMap[z][x] != nullptr) {
+        int randomItem = rand() % 4;
+        
+        if (randomItem == 3) {
+            
+        }
+        else {
+            itemMake(randomItem, -4.2 + 0.6 * x, 4.2 - 0.6 * z);
+        }
         itemMap[z][x]->destroy();  // 아이템 상자 메쉬 삭제 및 map 갱신
         delete itemMap[z][x];  // 객체 메모리 해제
         itemMap[z][x] = nullptr;  // itemMap에서 해당 객체 제거
@@ -927,6 +1021,8 @@ void setRandomItemBox() {
 // initialization
 bool Setup()
 {
+
+    
     int i;
     OutputDebugStringA("This is a test message.\n");
     D3DXMatrixIdentity(&g_mWorld);
@@ -1212,6 +1308,21 @@ bool Display(float timeDelta)
             // 플레이어 목숨 검사 후 STATE_GAMEOVER 전환 로직
             if (player[0].getPlayerLife() <= 0 || player[1].getPlayerLife() <= 0) {
                 g_GameState = STATE_GAMEOVER;
+            }
+
+
+            //아이템 관련 함수
+            for (int i = 0; i < itemList.size(); i++) {
+                bool isItem = false;//아이템 먹었는지 안먹었는지 확인해주기,,^^
+                itemList[i].draw(Device, g_mWorld);
+                //플레이어 1이랑 2랑 먹었는지 확인하기
+                isItem = itemList[i].hitBy(player[1], i);
+                isItem = itemList[i].hitBy(player[0], i);
+                if (isItem) {
+                    itemList[i].destroy();
+                    itemList.erase(itemList.begin() + i);
+                    i--;
+                }
             }
 
             break;
