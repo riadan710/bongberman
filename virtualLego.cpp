@@ -901,12 +901,12 @@ void resetPlayerPositions() {
 //게임상태 초기화(total)
 void resetGame() {
 
-    player[0].resetPlayer();
-    player[1].resetPlayer();
+    //player[0].resetPlayer();
+    //player[1].resetPlayer();
 
-    resetMap();
-    resetBombs();
-    resetPlayerPositions();
+    //resetMap();
+    //resetBombs();
+    //resetPlayerPositions();
 
 
 }
@@ -1249,12 +1249,12 @@ bool Display(float timeDelta)
                 g_pFontLarge->DrawText(NULL, winnerText, -1, &rc,
                     DT_CENTER | DT_VCENTER | DT_SINGLELINE, winnerColor);
             }
-            RECT rc2;
-            SetRect(&rc2, 0, Height / 2 + 60, Width, Height / 2 + 120);
-            if (g_pFont) {
-                g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc2,
-                    DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
-            }
+            //RECT rc2;
+            //SetRect(&rc2, 0, Height / 2 + 60, Width, Height / 2 + 120);
+            //if (g_pFont) {
+            //    g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc2,
+            //        DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
+            //}
 
             break;
         }
