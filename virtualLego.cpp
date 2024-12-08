@@ -363,9 +363,9 @@ private:
 
 public:
     //Explosion 생성
-    bool createExplosion(IDirect3DDevice9* pDevice) {
+    bool createExplosion(IDirect3DDevice9* pDevice, D3DXCOLOR color) {
         for (int i = 0; i < numOfExp; i++) {
-            if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, d3d::RED)) return false;
+            if (false == explosion[i].create(pDevice, -1, -1, 0.6f, 0.1f, 0.6f, color)) return false;
         }
         return true;
     }
@@ -1111,10 +1111,10 @@ bool Setup()
     //boom 생성
     for (int i = 0; i < MAX_BOOM; i++) {
         if (false == b_player1[i].create(Device, d3d::RED)) return false;
-        if (false == b_player1[i].createExplosion(Device))return false;
+        if (false == b_player1[i].createExplosion(Device, d3d::RED))return false;
 
         if (false == b_player2[i].create(Device, d3d::BLUE)) return false;
-        if (false == b_player2[i].createExplosion(Device))return false;
+        if (false == b_player2[i].createExplosion(Device, d3d::BLUE))return false;
     }
 
 
