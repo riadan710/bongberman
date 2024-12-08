@@ -1020,7 +1020,7 @@ void setRandomItemBox() {
     float randomX = startX + randomI * intervalX;  // X 좌표
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
-    itembox->create(Device, D3DXCOLOR(d3d::WHITE));  // 초록 상자
+    itembox->create(Device, D3DXCOLOR(d3d::WHITE));  // 하얀 상자
     itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
