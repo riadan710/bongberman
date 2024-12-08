@@ -48,16 +48,16 @@ D3DXMATRIX g_mProj;
 #define PLANE_X 6   //게임판의 x
 #define PLANE_Y 9   //게임판의 Y
 #define WALL_THICKNESS 0.3  //벽의 두께
-#define BOX_LENGTH 0.5  // 상자 길이
+#define BOX_LENGTH 0.5f  // 상자 길이
 
 //맵 배치에 사용
 int map[15][15] = {
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -754,30 +754,25 @@ CWall   g_legoPlane;
 CWall   g_legowall[4];
 CWall   playerBody[2];
 
-
 CLight   g_light;
 
 CWall boundaryLineByX[14];//15x15사이즈 가로눈금선
 CWall boundaryLineByY[14];//15x15사이즈 세로눈금선
 
-
-
 double g_camera_pos[3] = { 0.0, 5.0, -8.0 };
 
 Player player[2];//플레이어 1p,2p
-
-
 
 int ss_y = 14;
 int ss_x = 12;
 int validCount = 0;
 
-
 CBoom testBoom;
 
+// 아이템 상자
 vector<ItemBox> itemBoxes;
 ItemBox itembox;
-int itemBox_num = 15;
+int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 
 // -----------------------------------------------------------------------------
@@ -819,11 +814,10 @@ bool Setup()
     if (false == g_legowall[3].create(Device, -1, -1, 9, WALL_THICKNESS, 0.12f, d3d::DARKRED)) return false;
     g_legowall[3].setPosition(0.0f, 0.12f, -4.56f);
 
-    // create four balls and set the position
 
-    //경계선 그리기
-    //한칸 사이 간격은 0.6이다
-    //한칸이 즉 0.6*0.6
+    // 경계선 그리기
+    // 한칸 사이 간격은 0.6이다
+    // 한칸이 즉 0.6*0.6
     for (int i = 0; i < 14; i++) {
 
         if (false == boundaryLineByX[i].create(Device, -1, -1, 0.05f, 0.01f, 9, d3d::BLACK)) return false;
@@ -853,11 +847,10 @@ bool Setup()
         itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
         itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
+        map[randomJ][randomI] = 1;  // map 배열에 위치 표시
+
         itemBoxes.push_back(itembox);  // 벡터에 추가
     }
-
-    //itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-    //itembox.setPosition(4.1f, 0.5f, 3.8f);
 
 
     //플레이어 1 생성
@@ -943,21 +936,12 @@ bool Display(float timeDelta)
     int i = 0;
     int j = 0;
     
-
-    
-
     if (Device)
     {
         Device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00afafaf, 1.0f, 0);
         Device->BeginScene();
 
         // update the position of each ball. during update, check whether each ball hit by walls.
-        
-        
-        
-
-        
-
         
         for (int i = 0; i < 14; i++) {
             boundaryLineByX[i].draw(Device, g_mWorld);
@@ -971,7 +955,6 @@ bool Display(float timeDelta)
             g_legowall[i].draw(Device, g_mWorld);
             
         }
-        
         
         //g_light.draw(Device);
         
@@ -1003,7 +986,6 @@ bool Display(float timeDelta)
         for (int i = 0; i < itemBox_num; i++) {
             itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
         }
-        //itembox.draw(Device, g_mWorld);
 
         Device->EndScene();
         Device->Present(0, 0, 0, 0);
