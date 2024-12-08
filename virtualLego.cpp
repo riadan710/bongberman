@@ -994,10 +994,10 @@ void destroyAllItemBoxes() {
 void setRandomItemBox() {
     ItemBox* itembox = new ItemBox();  // 아이템 상자 객체 생성
 
-    float startX = -4.1f;
-    float startZ = 3.8f;
-    float intervalX = 0.5857f;  // X 간격
-    float intervalZ = 0.5786f;  // Z 간격
+    float startX = -4.2f;
+    float startZ = 4.2f;
+    float intervalX = 0.6;  // X 간격
+    float intervalZ = 0.6f;  // Z 간격
 
     // 랜덤 (i, j) 좌표 생성
     int randomI, randomJ;
@@ -1017,7 +1017,7 @@ void setRandomItemBox() {
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
     itembox->create(Device, D3DXCOLOR(d3d::WHITE));  // 초록 상자
-    itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+    itembox->setPosition(randomX, 0.25f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
     map[randomJ][randomI] = 1;  // map 배열에 위치 표시
