@@ -755,6 +755,7 @@ public:
 class CItem : public CSphere {
 private:
     int itemType; //1. 폭탄 개수 증가 2. 폭탄 범위 증가 3. 이속증가
+    bool animDir = false;//true면 내려가고 false면 올라감
 public:
     void setItemType(int i) {
         this->itemType = i;
@@ -795,14 +796,30 @@ public:
         default:
             break;
         }
-        //해당 아이템 지워줌
-        //근데 이렇게 지우면? for문에서 아이템 한개를 뛰어 넘을것만 같어
-        //for문에서 줄어드는걸 해줘야겠다
-
-
-
 
         return true;
+    }
+    void ballAnimation(float deltaTime) {
+        float height = this->center_y;
+        float tX = this->center_x;
+        float tZ = this->center_z;
+        float addHeight;
+        if (height >= I_RADIUS * 3) {
+            this->animDir = true;//true면 내려잇
+        }
+        else if (height <= I_RADIUS) {
+            this->animDir = false;//false면 올려잇
+        }
+        
+        if (animDir) {
+            height -= deltaTime;
+        }
+        else {
+            height += deltaTime;
+        }
+
+        this->setCenter(tX, height, tZ);
+        
     }
 };
 
@@ -950,7 +967,7 @@ bool itemMake(int itemType, float pos_x, float pos_z) {
         break;
     }
     if (false == item.create(Device, itemColor)) return false;
-    item.setCenter(pos_x, (float)P_RADIUS + 0.5f, pos_z);
+    item.setCenter(pos_x, (float)I_RADIUS, pos_z);
     item.setItemType(itemType + 1);
     itemList.push_back(item);
 }
@@ -967,9 +984,11 @@ void destroyItemBoxAt(int x, int z) {
     }
 
     if (itemMap[z][x] != nullptr) {
-        int randomItem = rand() % 4;
 
-        if (randomItem == 3) {
+        int randomItem = rand() % 8;
+        
+        if (randomItem >= 3) {
+            
 
         }
         else {
@@ -1328,13 +1347,21 @@ bool Display(float timeDelta)
             for (int i = 0; i < itemList.size(); i++) {
                 bool isItem = false;//아이템 먹었는지 안먹었는지 확인해주기,,^^
                 itemList[i].draw(Device, g_mWorld);
+                itemList[i].ballAnimation(timeDelta);
                 //플레이어 1이랑 2랑 먹었는지 확인하기
                 isItem = itemList[i].hitBy(player[1], i);
+                if (isItem) {
+                    itemList[i].destroy();
+                    itemList.erase(itemList.begin() + i);
+                    i--;
+                    continue;
+                }
                 isItem = itemList[i].hitBy(player[0], i);
                 if (isItem) {
                     itemList[i].destroy();
                     itemList.erase(itemList.begin() + i);
                     i--;
+                    continue;
                 }
             }
 
