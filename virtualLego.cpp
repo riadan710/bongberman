@@ -922,6 +922,8 @@ ItemBox* itemMap[15][15] = { nullptr };
 
 int itemBox_num = 20;   // 전체 아이템 상자 개수
 
+//아이템 벡터 선언
+vector<CItem> itemList;
 
 // -----------------------------------------------------------------------------
 // Functions
