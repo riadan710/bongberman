@@ -67,7 +67,7 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 //일단 폭탄은 2로 설정
@@ -82,6 +82,7 @@ enum GameState {
 
 GameState g_GameState = STATE_MENU;
 
+void destroyItemBoxAt(int x, int z);
 
 
 
@@ -324,7 +325,7 @@ public:
     bool checkExp(int x, int y) {
         if (e_isActive) {
             if (e_indexX == x && e_indexZ == y) {
-                 return true;
+                return true;
             }
             return false;
         }
@@ -346,15 +347,14 @@ private:
     float b_time;
     bool b_isActive = false;
     float b_setTime = 2;
-    //int b_numOfBoom = 5;
+    int b_numOfBoom = 1;
     const int b_max = 10;
 
-    int b_indexX =0;
-    int b_indexZ =0;
-    int b_range = 0;
-    int numOfExp = 17;
-    CExplosion explosion[17];
-    
+    int b_indexX = 0;
+    int b_indexZ = 0;
+    int b_range = 2;
+    CExplosion explosion[9];
+    int numOfExp = 9;
 
     bool player1 = false;
     bool player2 = false;
@@ -368,13 +368,13 @@ public:
         }
         return true;
     }
-    
+
     //키 눌렀을 때
     void pressKey(float sx, float py, float sz) {
         if (!b_isActive) {
             player1 = false;
             player2 = false;
-            this -> b_isActive = true;
+            this->b_isActive = true;
             setCenter(sx, py, sz);
             this->b_time = 0;
             map[b_indexZ][b_indexX] = 2;
@@ -392,40 +392,65 @@ public:
             map[b_indexZ][b_indexX] = 0;
             b_isActive = false;
 
-            explosion[0].activate(-4.2 + 0.6*b_indexX, 0, 4.2 - 0.6*b_indexZ); // 폭탄 위치
+            explosion[0].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * b_indexZ); // 폭탄 위치
             explosion[0].setIndex(b_indexX, b_indexZ);
+
             for (int i = 0; i < b_range; i++) {
                 if (b_indexX + i + 1 < 15) {
-                    explosion[1 + i*4].activate(-4.2 + 0.6 * (b_indexX+i+1), 0, 4.2 - 0.6 * b_indexZ); // X +
-                    explosion[1 + i*4].setIndex(b_indexX + i+1, b_indexZ);
+                    if (map[b_indexZ][b_indexX + i + 1] == 1) {
+                        destroyItemBoxAt(b_indexX + i + 1, b_indexZ);  // 아이템 상자 삭제
+                        break;
+                    }
+                    explosion[1 + i * 4].activate(-4.2 + 0.6 * (b_indexX + i + 1), 0, 4.2 - 0.6 * b_indexZ); // X +
+                    explosion[1 + i * 4].setIndex(b_indexX + i + 1, b_indexZ);
                 }
-                if (b_indexX - i - 1 > -1) {
+            }
+
+            for (int i = 0; i < b_range; i++) {
+                if (b_indexX - i - 1 >= 0) {
+                    if (map[b_indexZ][b_indexX - i - 1] == 1) {
+                        destroyItemBoxAt(b_indexX - i - 1, b_indexZ);  // 아이템 상자 삭제
+                        break;
+                    }
                     explosion[2 + i * 4].activate(-4.2 + 0.6 * (b_indexX - i - 1), 0, 4.2 - 0.6 * b_indexZ); // X -
                     explosion[2 + i * 4].setIndex(b_indexX - i - 1, b_indexZ);
                 }
+            }
 
+            for (int i = 0; i < b_range; i++) {
                 if (b_indexZ + i + 1 < 15) {
+                    if (map[b_indexZ + i + 1][b_indexX] == 1) {
+                        destroyItemBoxAt(b_indexX, b_indexZ + i + 1);  // 아이템 상자 삭제
+                        break;
+                    }
                     explosion[3 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ + i + 1)); // Z +
                     explosion[3 + i * 4].setIndex(b_indexX, b_indexZ + i + 1);
                 }
+            }
 
-                if (b_indexZ - i - 1 > -1) {
+            for (int i = 0; i < b_range; i++) {
+                if (b_indexZ - i - 1 >= 0) {
+                    if (map[b_indexZ - i - 1][b_indexX] == 1) {
+                        destroyItemBoxAt(b_indexX, b_indexZ - i - 1);  // 아이템 상자 삭제
+                        break;
+                    }
                     explosion[4 + i * 4].activate(-4.2 + 0.6 * b_indexX, 0, 4.2 - 0.6 * (b_indexZ - i - 1)); // Z -
                     explosion[4 + i * 4].setIndex(b_indexX, b_indexZ - i - 1);
                 }
             }
+
         }
     }
 
     void updateExplosions(float timeDelta) {
-        for (int i = 0; i < b_range*4+1; ++i) {
+        for (int i = 0; i < 9; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
     }
 
     bool checkExplosion2(int x, int y) {
         if (!player1) {
-            for (int i = 0; i < b_range * 4 + 1; i++) {
+            for (int i = 0; i < 9; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player1 = true;
                     return true;
@@ -437,7 +462,7 @@ public:
 
     bool checkExplosion1(int x, int y) {
         if (!player2) {
-            for (int i = 0; i < b_range * 4 + 1; i++) {
+            for (int i = 0; i < 9; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player2 = true;
                     return true;
@@ -448,7 +473,7 @@ public:
     }
 
     void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
-        for (int i = 0; i < b_range * 4 + 1; ++i) {
+        for (int i = 0; i < 9; ++i) {
             if (explosion[i].getActive()) {
                 explosion[i].draw(pDevice, mWorld);
             }
@@ -461,31 +486,27 @@ public:
     }
 
     //아이템 먹고 폭탄 개수 늘려주기
-    //void setNumOfBoom(int numOfBoom) {
-    //    if (numOfBoom <= b_max) {
-    //        b_numOfBoom = numOfBoom;
-    //    }
-    //}
+    void setNumOfBoom(int numOfBoom) {
+        if (numOfBoom <= b_max) {
+            b_numOfBoom = numOfBoom;
+        }
+    }
 
-    //int getNumOfBoom() {
-    //    return b_numOfBoom;
-    //}
+    int getNumOfBoom() {
+        return b_numOfBoom;
+    }
 
     void setIndexXY(int indexX, int indexY) {
         this->b_indexX = indexX;
         this->b_indexZ = indexY;
-    }
-
-    void setBoomRange(int x) {
-        b_range = x;
     }
 };
 
 class Player : public CSphere { //플레이어 저장하는 클래스
 private:
     int playerLife = 3;//플레이어 목숨
-    int bombRange = 1;//폭탄 범위
-    int bombCap = 3;//폭탄용량
+    int bombRange = 2;//폭탄 범위
+    int bombCap = 1;//폭탄용량
     float playerSpeed = 1.5f;   //기본으로 존재하는 플레이어 스피드
     int playerIndexX;
     int playerIndexY;
@@ -723,6 +744,14 @@ public:
         m_indexX = x;
         m_indexZ = z;
     }
+
+    int getIndexX() const {
+        return m_indexX;
+    }
+
+    int getIndexZ() const {
+        return m_indexZ;
+    }
 };
 
 class CItem : public CSphere {
@@ -894,9 +923,9 @@ ID3DXFont* g_pFont = NULL; //폰트1 변수
 ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
 // 아이템 상자
-vector<ItemBox> itemBoxes;
 ItemBox itembox;
 
+ItemBox* itemMap[15][15] = { nullptr };
 
 int itemBox_num = 20;   // 전체 아이템 상자 개수
 
@@ -1006,8 +1035,43 @@ void destroyAllLegoBlock(void)
 
 }
 
+// 특정 좌표의 아이템 상자 삭제
+void destroyItemBoxAt(int x, int z) {
+    if (x < 0 || x >= 15 || z < 0 || z >= 15) {
+        return;  // 범위를 벗어난 경우 처리하지 않음
+    }
+
+    if (itemMap[z][x] != nullptr) {
+        int randomItem = rand() % 4;
+        
+        if (randomItem == 3) {
+            
+        }
+        else {
+            itemMake(randomItem, -4.2 + 0.6 * x, 4.2 - 0.6 * z);
+        }
+        itemMap[z][x]->destroy();  // 아이템 상자 메쉬 삭제 및 map 갱신
+        delete itemMap[z][x];  // 객체 메모리 해제
+        itemMap[z][x] = nullptr;  // itemMap에서 해당 객체 제거
+    }
+}
+
+// 모든 아이템 상자 삭제
+void destroyAllItemBoxes() {
+    // itemMap을 순회하면서 모든 아이템 상자 삭제
+    for (int i = 0; i < 15; ++i) {
+        for (int j = 0; j < 15; ++j) {
+            if (itemMap[i][j] != nullptr) {
+                itemMap[i][j]->destroy();  // 객체 내 리소스 해제
+                delete itemMap[i][j];      // 객체 삭제
+                itemMap[i][j] = nullptr;   // 포인터 초기화
+            }
+        }
+    }
+}
+
 void setRandomItemBox() {
-    ItemBox itembox;  // 아이템 상자 객체 생성
+    ItemBox* itembox = new ItemBox();  // 아이템 상자 객체 생성
 
     float startX = -4.1f;
     float startZ = 3.8f;
@@ -1022,24 +1086,22 @@ void setRandomItemBox() {
     float randomX = startX + randomI * intervalX;  // X 좌표
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
-    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-    itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+    itembox->create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
     map[randomJ][randomI] = 1;  // map 배열에 위치 표시
 
-    itembox.setIndex(randomI, randomJ);
+    itembox->setIndex(randomI, randomJ);
 
-    itemBoxes.push_back(itembox);  // 벡터에 추가
+    itemMap[randomJ][randomI] = itembox;  // itemMap 배열에 추가
 }
 
 // initialization
 bool Setup()
 {
 
-    itemMake(0, 0, 0);
-    itemMake(1, 4.0f, 4.0f);
-    itemMake(2, -4.0f, -4.0f);
+    
     int i;
     OutputDebugStringA("This is a test message.\n");
     D3DXMatrixIdentity(&g_mWorld);
@@ -1083,7 +1145,6 @@ bool Setup()
     for (int i = 0; i < itemBox_num; i++) {
         setRandomItemBox();
     }
-
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
@@ -1259,8 +1320,12 @@ bool Display(float timeDelta)
             player[1].bindingPlayerBody(playerBody[1]);
 
             // 아이템 상자들 그리기
-            for (int i = 0; i < itemBox_num; i++) {
-                itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+            for (int i = 0; i < 15; ++i) {
+                for (int j = 0; j < 15; ++j) {
+                    if (itemMap[i][j] != nullptr) {
+                        itemMap[i][j]->draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+                    }
+                }
             }
 
             //1 player's boom
@@ -1438,18 +1503,12 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[0].updatePlayerIndex();
             for (int i = 0; i < player[0].getBombCap(); i++) {
                 if (!b_player1[i].getActive()) {
-                    if (map[player[0].getPlayerIndexY()][player[0].getPlayerIndexX()] != 2) {
-                        //같은 위치에 여러번 설치 방지
-                        b_player1[i].setBoomRange(player[0].getBombRange());
-                        //플레이어 폭발 범위 값과 연동
-                        b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
-                        b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
-                        break;
-                    }
+                    b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
+                    b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
+                    break;
                 }
             }
             break;
-
 
         case VK_UP:
             player[1].setPower(0, playerTwoSp);
@@ -1462,20 +1521,15 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             player[1].setPower(-playerTwoSp, 0);
             break;
         case VK_RIGHT:
-            player[1].setPower(playerTwoSp, 0); 
+            player[1].setPower(playerTwoSp, 0);
             break;
         case 'L':
             player[1].updatePlayerIndex();
             for (int i = 0; i < player[1].getBombCap(); i++) {
                 if (!b_player2[i].getActive()) {
-                    if (map[player[1].getPlayerIndexY()][player[1].getPlayerIndexX()] != 2) {
-                        //같은 위치에 여러번 설치 방지
-                        b_player2[i].setBoomRange(player[1].getBombRange());
-                        //플레이어 폭발 범위 값과 연동
-                        b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
-                        b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
-                        break;
-                    }
+                    b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
+                    b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
+                    break;
                 }
             }
             break;
@@ -1579,4 +1633,3 @@ int WINAPI WinMain(HINSTANCE hinstance,
 
     return 0;
 }
-
