@@ -348,9 +348,10 @@ private:
 
     int b_indexX =0;
     int b_indexZ =0;
-    int b_range = 2;
-    CExplosion explosion[9];
-    int numOfExp = 9;
+    int b_range = 0;
+    int numOfExp = 17;
+    CExplosion explosion[17];
+    
 
     bool player1 = false;
     bool player2 = false;
@@ -414,14 +415,14 @@ public:
     }
 
     void updateExplosions(float timeDelta) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range*4+1; ++i) {
             explosion[i].explosionUpdate(timeDelta);
         }
     }
 
     bool checkExplosion2(int x, int y) {
         if (!player1) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player1 = true;
                     return true;
@@ -433,7 +434,7 @@ public:
 
     bool checkExplosion1(int x, int y) {
         if (!player2) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < b_range * 4 + 1; i++) {
                 if (explosion[i].checkExp(x, y)) {
                     player2 = true;
                     return true;
@@ -444,7 +445,7 @@ public:
     }
 
     void drawExplosions(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
-        for (int i = 0; i < 9; ++i) {
+        for (int i = 0; i < b_range * 4 + 1; ++i) {
             if (explosion[i].getActive()) {
                 explosion[i].draw(pDevice, mWorld);
             }
@@ -470,6 +471,10 @@ public:
     void setIndexXY(int indexX, int indexY) {
         this->b_indexX = indexX;
         this->b_indexZ = indexY;
+    }
+
+    void setBoomRange(int x) {
+        b_range = x;
     }
 };
 
@@ -524,7 +529,7 @@ public:
     void resetPlayer() {
         this->playerLife = 3;
         this->bombRange = 1;
-        this->bombCap = 2;
+        this->bombCap = 1;
         this->playerSpeed = 1.5f;
     }
 
@@ -1327,6 +1332,8 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (!b_player1[i].getActive()) {
                     if (map[player[0].getPlayerIndexY()][player[0].getPlayerIndexX()] != 2) {
                         //같은 위치에 여러번 설치 방지
+                        b_player1[i].setBoomRange(player[0].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
                         b_player1[i].setIndexXY(player[0].getPlayerIndexX(), player[0].getPlayerIndexY());
                         b_player1[i].pressKey(-4.2 + 0.6 * player[0].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[0].getPlayerIndexY());
                         break;
@@ -1334,6 +1341,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
             }
             break;
+
 
         case VK_UP:
             player[1].setPower(0, playerTwoSp);
@@ -1354,6 +1362,8 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (!b_player2[i].getActive()) {
                     if (map[player[1].getPlayerIndexY()][player[1].getPlayerIndexX()] != 2) {
                         //같은 위치에 여러번 설치 방지
+                        b_player2[i].setBoomRange(player[1].getBombRange());
+                        //플레이어 폭발 범위 값과 연동
                         b_player2[i].setIndexXY(player[1].getPlayerIndexX(), player[1].getPlayerIndexY());
                         b_player2[i].pressKey(-4.2 + 0.6 * player[1].getPlayerIndexX(), M_RADIUS - 0.1, 4.2 - 0.6 * player[1].getPlayerIndexY());
                         break;
