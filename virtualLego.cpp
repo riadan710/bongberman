@@ -1,3 +1,4 @@
+
 #include "d3dUtility.h"
 #include <vector>
 #include <ctime>
@@ -6,7 +7,10 @@
 #include <cassert>
 #include <windows.h>
 #include <string>
-
+#include <conio.h>
+#include <mmsystem.h>
+#pragma comment(lib,"winmm.lib")
+#include <thread>
 
 using namespace std;
 // Direct3D 장치 포인터
@@ -33,7 +37,22 @@ D3DXMATRIX g_mProj;
 #define BOX_LENGTH 0.5f  // 상자 길이
 #define BOX_COUNT 30    // 상자 개수
 
+
+
+//------------------bgm과 효과음 실행용 함수-----------------
+void PlaySoundMCI(const char* soundFile) {
+    string command = "play ";
+    command += soundFile;
+    command += " from 0 wait";
+    mciSendString(command.c_str(), NULL, 0, NULL);
+}
+
+//bgm 출력 종료----------------------------------------------------------------
+
+
+
 //맵 배치에 사용 (상자는 1, 폭탄은 2)
+
 int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -360,6 +379,8 @@ public:
 
         b_time += timeDelta;
         if (b_time >= b_setTime) {
+            
+            
             map[b_indexZ][b_indexX] = 0;
             b_isActive = false;
 
@@ -1021,6 +1042,22 @@ void setRandomItemBox() {
 // initialization
 bool Setup()
 {
+
+
+    if (!PlaySound(TEXT("bgm.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP))
+    {
+        OutputDebugStringA("cant open file.\n");
+        
+    }
+    else {
+        OutputDebugStringA("file open\n");
+    }
+    
+    
+
+    int i;
+    
+
     D3DXMatrixIdentity(&g_mWorld);
     D3DXMatrixIdentity(&g_mView);
     D3DXMatrixIdentity(&g_mProj);
@@ -1419,6 +1456,7 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
 
         case 'D':
+            
             player[0].setPower(playerOneSp, 0);
             break;
 
@@ -1551,6 +1589,7 @@ int WINAPI WinMain(HINSTANCE hinstance,
         ::MessageBox(0, "InitD3D() - FAILED", 0, 0);
         return 0;
     }
+    
 
     if (!Setup())
     {
