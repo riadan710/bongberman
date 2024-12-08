@@ -66,7 +66,7 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 //일단 폭탄은 2로 설정
@@ -781,6 +781,95 @@ public:
     }
 };
 
+class ItemBox {
+private:
+    float m_length;  // 정육면체 한 변의 길이
+    D3DXMATRIX m_mLocal;  // 로컬 변환 행렬
+    D3DMATERIAL9 m_mtrl;   // 재질 정보
+    ID3DXMesh* m_pBoxMesh; // 정육면체 메쉬 포인터
+
+    int m_indexX, m_indexZ;  // 해당 상자의 X, Z 좌표
+public:
+    // 생성자
+    ItemBox() : m_length(BOX_LENGTH), m_pBoxMesh(nullptr) {
+        ZeroMemory(&m_mtrl, sizeof(m_mtrl));
+        D3DXMatrixIdentity(&m_mLocal); // 로컬 변환 행렬 초기화
+    }
+
+    // 정육면체 생성
+    bool create(IDirect3DDevice9* pDevice, D3DXCOLOR color = D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)) {
+        if (pDevice == nullptr) return false;
+
+        // 정육면체 재질 설정
+        m_mtrl.Ambient = color;
+        m_mtrl.Diffuse = color;
+        m_mtrl.Specular = color;
+        m_mtrl.Emissive = D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f);
+        m_mtrl.Power = 5.0f;
+
+        // 정육면체 메쉬 생성
+        if (FAILED(D3DXCreateBox(pDevice, m_length, m_length, m_length, &m_pBoxMesh, nullptr))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // 정육면체 그리기
+    void draw(IDirect3DDevice9* pDevice, const D3DXMATRIX& mWorld) {
+        if (pDevice == nullptr || m_pBoxMesh == nullptr) return;
+
+        pDevice->SetTransform(D3DTS_WORLD, &mWorld);  // 월드 변환 설정
+        pDevice->MultiplyTransform(D3DTS_WORLD, &m_mLocal);  // 로컬 변환 적용
+        pDevice->SetMaterial(&m_mtrl);  // 재질 설정
+        m_pBoxMesh->DrawSubset(0);  // 메쉬 그리기
+    }
+
+    // 위치 설정
+    void setPosition(float x, float y, float z) {
+        D3DXMATRIX m;
+        D3DXMatrixTranslation(&m, x, y, z);  // 주어진 위치로 이동
+        m_mLocal = m;  // 로컬 변환 행렬 설정
+    }
+
+    // 위치 및 변환 관련 메서드
+    const D3DXMATRIX& getLocalTransform() const {
+        return m_mLocal;
+    }
+
+    // 정육면체의 한 변의 길이 반환
+    float getLength() const {
+        return m_length;
+    }
+
+    // 정육면체 메쉬 삭제
+    void destroy() {
+        if (m_pBoxMesh) {
+            m_pBoxMesh->Release();
+            m_pBoxMesh = nullptr;
+        }
+
+        // 해당 좌표의 map 값을 0으로 설정
+        if (m_indexX >= 0 && m_indexZ >= 0) {
+            map[m_indexZ][m_indexX] = 0;  // 좌표 위치에서 map 값 제거
+        }
+    }
+
+    void setIndex(float x, float z) {
+        m_indexX = x;
+        m_indexZ = z;
+    }
+
+    int getIndexX() const {
+        return m_indexX;
+    }
+
+    int getIndexZ() const {
+        return m_indexZ;
+    }
+};
+
+
 // -----------------------------------------------------------------------------
 // CLight class definition
 // -----------------------------------------------------------------------------
@@ -895,6 +984,10 @@ CBoom b_player2[MAX_BOOM];
 ID3DXFont* g_pFont = NULL; //폰트1 변수
 ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
+// 아이템 상자
+ItemBox itembox;
+ItemBox* itemMap[15][15] = { nullptr };
+int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 
 //게임 초기화 함수들(게임 오버됐을때 다시 시작)
@@ -957,12 +1050,12 @@ void resetPlayerPositions() {
 //게임상태 초기화(total)
 void resetGame() {
 
-    player[0].resetPlayer();
-    player[1].resetPlayer();
+    //player[0].resetPlayer();
+    //player[1].resetPlayer();
 
-    resetMap();
-    resetBombs();
-    resetPlayerPositions();
+    //resetMap();
+    //resetBombs();
+    //resetPlayerPositions();
 
 
 }
@@ -976,8 +1069,35 @@ void destroyAllLegoBlock(void)
 
 }
 
+// 특정 좌표의 아이템 상자 삭제
+void destroyItemBoxAt(int x, int z) {
+    if (x < 0 || x >= 15 || z < 0 || z >= 15) {
+        return;  // 범위를 벗어난 경우 처리하지 않음
+    }
+
+    if (itemMap[z][x] != nullptr) {
+        itemMap[z][x]->destroy();  // 아이템 상자 메쉬 삭제 및 map 갱신
+        delete itemMap[z][x];  // 객체 메모리 해제
+        itemMap[z][x] = nullptr;  // itemMap에서 해당 객체 제거
+    }
+}
+
+// 모든 아이템 상자 삭제
+void destroyAllItemBoxes() {
+    // itemMap을 순회하면서 모든 아이템 상자 삭제
+    for (int i = 0; i < 15; ++i) {
+        for (int j = 0; j < 15; ++j) {
+            if (itemMap[i][j] != nullptr) {
+                itemMap[i][j]->destroy();  // 객체 내 리소스 해제
+                delete itemMap[i][j];      // 객체 삭제
+                itemMap[i][j] = nullptr;   // 포인터 초기화
+            }
+        }
+    }
+}
+
 void setRandomItemBox() {
-    ItemBox itembox;  // 아이템 상자 객체 생성
+    ItemBox* itembox = new ItemBox();  // 아이템 상자 객체 생성
 
     float startX = -4.1f;
     float startZ = 3.8f;
@@ -992,15 +1112,15 @@ void setRandomItemBox() {
     float randomX = startX + randomI * intervalX;  // X 좌표
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
-    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-    itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+    itembox->create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
     map[randomJ][randomI] = 1;  // map 배열에 위치 표시
 
-    itembox.setIndex(randomI, randomJ);
+    itembox->setIndex(randomI, randomJ);
 
-    itemBoxes.push_back(itembox);  // 벡터에 추가
+    itemMap[randomJ][randomI] = itembox;  // itemMap 배열에 추가
 }
 
 // initialization
@@ -1049,7 +1169,6 @@ bool Setup()
     for (int i = 0; i < itemBox_num; i++) {
         setRandomItemBox();
     }
-
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
@@ -1225,8 +1344,12 @@ bool Display(float timeDelta)
             player[1].bindingPlayerBody(playerBody[1]);
 
             // 아이템 상자들 그리기
-            for (int i = 0; i < itemBox_num; i++) {
-                itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+            for (int i = 0; i < 15; ++i) {
+                for (int j = 0; j < 15; ++j) {
+                    if (itemMap[i][j] != nullptr) {
+                        itemMap[i][j]->draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+                    }
+                }
             }
 
             //1 player's boom
@@ -1305,12 +1428,12 @@ bool Display(float timeDelta)
                 g_pFontLarge->DrawText(NULL, winnerText, -1, &rc,
                     DT_CENTER | DT_VCENTER | DT_SINGLELINE, winnerColor);
             }
-            RECT rc2;
-            SetRect(&rc2, 0, Height / 2 + 60, Width, Height / 2 + 120);
-            if (g_pFont) {
-                g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc2,
-                    DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
-            }
+            //RECT rc2;
+            //SetRect(&rc2, 0, Height / 2 + 60, Width, Height / 2 + 120);
+            //if (g_pFont) {
+            //    g_pFont->DrawText(NULL, "Press ENTER to restart", -1, &rc2,
+            //        DT_CENTER | DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255));
+            //}
 
             break;
         }
