@@ -66,7 +66,7 @@ int map[15][15] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 //일단 폭탄은 2로 설정
@@ -713,6 +713,14 @@ public:
         m_indexX = x;
         m_indexZ = z;
     }
+
+    int getIndexX() const {
+        return m_indexX;
+    }
+
+    int getIndexZ() const {
+        return m_indexZ;
+    }
 };
 
 
@@ -831,8 +839,8 @@ ID3DXFont* g_pFont = NULL; //폰트1 변수
 ID3DXFont* g_pFontLarge = NULL; //폰트2 변수
 
 // 아이템 상자
-vector<ItemBox> itemBoxes;
 ItemBox itembox;
+ItemBox* itemMap[15][15] = { nullptr };
 int itemBox_num = 20;   // 전체 아이템 상자 개수
 
 
@@ -915,8 +923,35 @@ void destroyAllLegoBlock(void)
 
 }
 
+// 특정 좌표의 아이템 상자 삭제
+void destroyItemBoxAt(int x, int z) {
+    if (x < 0 || x >= 15 || z < 0 || z >= 15) {
+        return;  // 범위를 벗어난 경우 처리하지 않음
+    }
+
+    if (itemMap[z][x] != nullptr) {
+        itemMap[z][x]->destroy();  // 아이템 상자 메쉬 삭제 및 map 갱신
+        delete itemMap[z][x];  // 객체 메모리 해제
+        itemMap[z][x] = nullptr;  // itemMap에서 해당 객체 제거
+    }
+}
+
+// 모든 아이템 상자 삭제
+void destroyAllItemBoxes() {
+    // itemMap을 순회하면서 모든 아이템 상자 삭제
+    for (int i = 0; i < 15; ++i) {
+        for (int j = 0; j < 15; ++j) {
+            if (itemMap[i][j] != nullptr) {
+                itemMap[i][j]->destroy();  // 객체 내 리소스 해제
+                delete itemMap[i][j];      // 객체 삭제
+                itemMap[i][j] = nullptr;   // 포인터 초기화
+            }
+        }
+    }
+}
+
 void setRandomItemBox() {
-    ItemBox itembox;  // 아이템 상자 객체 생성
+    ItemBox* itembox = new ItemBox();  // 아이템 상자 객체 생성
 
     float startX = -4.1f;
     float startZ = 3.8f;
@@ -931,15 +966,15 @@ void setRandomItemBox() {
     float randomX = startX + randomI * intervalX;  // X 좌표
     float randomZ = startZ - randomJ * intervalZ;  // Z 좌표 (반대로 빼줘야 위에서 아래로 간다)
 
-    itembox.create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
-    itembox.setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
+    itembox->create(Device, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f));  // 초록 상자
+    itembox->setPosition(randomX, 0.5f, randomZ);  // 랜덤 위치 설정
 
     // X, Z 반대 주의!
     map[randomJ][randomI] = 1;  // map 배열에 위치 표시
 
-    itembox.setIndex(randomI, randomJ);
+    itembox->setIndex(randomI, randomJ);
 
-    itemBoxes.push_back(itembox);  // 벡터에 추가
+    itemMap[randomJ][randomI] = itembox;  // itemMap 배열에 추가
 }
 
 // initialization
@@ -988,7 +1023,6 @@ bool Setup()
     for (int i = 0; i < itemBox_num; i++) {
         setRandomItemBox();
     }
-
 
     //플레이어 1 생성
     if (false == player[0].create(Device, d3d::RED)) return false;
@@ -1164,8 +1198,12 @@ bool Display(float timeDelta)
             player[1].bindingPlayerBody(playerBody[1]);
 
             // 아이템 상자들 그리기
-            for (int i = 0; i < itemBox_num; i++) {
-                itemBoxes[i].draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+            for (int i = 0; i < 15; ++i) {
+                for (int j = 0; j < 15; ++j) {
+                    if (itemMap[i][j] != nullptr) {
+                        itemMap[i][j]->draw(Device, g_mWorld);  // 각 아이템 상자 그리기
+                    }
+                }
             }
 
             //1 player's boom
